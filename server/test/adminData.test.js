@@ -54,24 +54,29 @@ test("Admin Data Management: mergeSampleData & killSwitch", async (t) => {
     assert.strictEqual(teacherUser.role, "teacher");
   });
 
-  await t.test("mergeSampleData should be idempotent and not create duplicate records on repeated calls", () => {
+  await t.test("mergeSampleData should keep generating more unique data with each call", () => {
     const classesCountBefore = db.prepare("SELECT COUNT(*) as count FROM classes").get().count;
     const subjectsCountBefore = db.prepare("SELECT COUNT(*) as count FROM subjects").get().count;
     const teachersCountBefore = db.prepare("SELECT COUNT(*) as count FROM teachers").get().count;
 
     const secondResult = mergeSampleData();
     assert.strictEqual(secondResult.success, true);
-    assert.strictEqual(secondResult.stats.addedClasses, 0, "No duplicate classes should be added");
-    assert.strictEqual(secondResult.stats.addedSubjects, 0, "No duplicate subjects should be added");
-    assert.strictEqual(secondResult.stats.addedTeachers, 0, "No duplicate teachers should be added");
+    assert.ok(secondResult.stats.addedClasses > 0, "Should add new classes on subsequent press");
+    assert.ok(secondResult.stats.addedSubjects > 0, "Should add new subjects on subsequent press");
+    assert.ok(secondResult.stats.addedTeachers > 0, "Should add new faculty on subsequent press");
 
     const classesCountAfter = db.prepare("SELECT COUNT(*) as count FROM classes").get().count;
     const subjectsCountAfter = db.prepare("SELECT COUNT(*) as count FROM subjects").get().count;
     const teachersCountAfter = db.prepare("SELECT COUNT(*) as count FROM teachers").get().count;
 
-    assert.strictEqual(classesCountAfter, classesCountBefore);
-    assert.strictEqual(subjectsCountAfter, subjectsCountBefore);
-    assert.strictEqual(teachersCountAfter, teachersCountBefore);
+    assert.ok(classesCountAfter > classesCountBefore, "Total classes should increase");
+    assert.ok(subjectsCountAfter > subjectsCountBefore, "Total subjects should increase");
+    assert.ok(teachersCountAfter > teachersCountBefore, "Total teachers should increase");
+
+    // Third call should add another unique department (e.g. AIDS)
+    const thirdResult = mergeSampleData();
+    assert.strictEqual(thirdResult.success, true);
+    assert.ok(thirdResult.stats.addedClasses > 0, "Should continue adding unique classes on 3rd press");
   });
 
   await t.test("killSwitch should safely wipe all timetable and institutional data while preserving admin account", () => {

@@ -479,43 +479,47 @@ const Settings = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between mb-1">
                     <Badge className="bg-primary/15 text-primary border-primary/30 text-xs">
-                      Safe Merge • Idempotent
+                      Continuous Generation • Safe Merge
                     </Badge>
                     <Sparkles className="h-4 w-4 text-primary" />
                   </div>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <PlusCircle className="h-5 w-5 text-primary" />
-                    Add More Default Data
+                    Generate & Merge More Data
                   </CardTitle>
                   <CardDescription>
-                    Seamlessly merge additional sample academic records into your existing database without overwriting or deleting already available data.
+                    Dynamically generates and merges brand-new unique academic records (departments, classes, faculty, subjects, and rooms) with each press—seamlessly expanding your institution without overwriting existing data.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      Expands your institution with upper-year batches, specialized computer science courses, and modern lab infrastructure:
+                      Each click intelligently provisions the next unrepresented academic department or specialized track:
                     </p>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>New Classes:</strong> Third Year (TE-CS-A/B) & Final Year (BE-CS-A/B)</span>
+                        <span><strong>Unique Departments:</strong> IT, AI & Data Science, Cyber Security, Robotics, ENTC & beyond</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>Specialized Faculty:</strong> Dr. Sunita Rao (Cloud), Prof. Rohan Patil (AI) & more</span>
+                        <span><strong>4 New Class Divisions:</strong> (SE-A/B, TE-A/B) generated per department</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>Curriculum:</strong> Artificial Intelligence, Cloud Computing, Cyber Security</span>
+                        <span><strong>3–4 New Faculty:</strong> Specialized professors mapped to new course curricula</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>Infrastructure:</strong> AI & GPU Lab 3, Lecture Hall 301/302, Seminar Hall B</span>
+                        <span><strong>4–6 Subjects & Labs:</strong> Theory lectures and 2-hour laboratory sessions</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>Accounts:</strong> Ready-to-use teacher and student representative logins</span>
+                        <span><strong>2–3 New Classrooms:</strong> Smart lecture halls & dedicated departmental lab facilities</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span><strong>User Accounts:</strong> Fresh teacher and student representative logins automatically generated</span>
                       </li>
                     </ul>
                   </div>
@@ -529,7 +533,7 @@ const Settings = () => {
                       className="w-full gap-2"
                     >
                       <PlusCircle className="h-4 w-4" />
-                      Add More Default Data
+                      Generate & Merge More Data
                     </Button>
                   </div>
                 </CardContent>
@@ -613,30 +617,34 @@ const Settings = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              Add More Default Data (Double Confirmation)
+              Generate & Merge More Unique Data (Double Confirmation)
             </DialogTitle>
             <DialogDescription>
-              Step 1 of 2: Review the additions below and confirm you want to merge them into your institutional database.
+              Step 1 of 2: Every press provisions a new unique academic department or specialized track (classes, faculty, courses, rooms, logins) and seamlessly merges it into your timetable database.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Classes to add:</span>
-                <span className="font-semibold">TE-CS-A, TE-CS-B, BE-CS-A, BE-CS-B</span>
+                <span className="text-muted-foreground">Unique Batch Generation:</span>
+                <span className="font-semibold text-primary">Next unrepresented department / track</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">New Classes per click:</span>
+                <span className="font-semibold">4 Class Divisions (SE & TE)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Faculty members:</span>
-                <span className="font-semibold">Dr. Sunita Rao, Prof. Rohan Patil & 2 others</span>
+                <span className="font-semibold">3–4 Specialized Professors</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subjects & Labs:</span>
-                <span className="font-semibold">CS401, CS401L, CS402, CS402L, CS501, CS502</span>
+                <span className="font-semibold">4–6 Theory & Lab Courses</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Existing data impact:</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Zero data loss / No overwrites</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Zero data loss / Preserves existing data</span>
               </div>
             </div>
 

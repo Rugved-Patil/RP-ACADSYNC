@@ -6,7 +6,7 @@
 const { getFullTimetable } = require("./exporter");
 const { db } = require("../db");
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function groupByDay(lessons) {
   return lessons.reduce((acc, lesson) => {

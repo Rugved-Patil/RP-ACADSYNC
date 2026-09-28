@@ -3,7 +3,7 @@ import { Class, Teacher, Subject, TimeSlot, Lesson, Timetable, EditMode, Classro
 import { cn } from "@/lib/utils";
 import { TimetableEditDialog } from "./TimetableEditDialog";
 import { ClassColorLegend, getClassColorMap } from "./ClassColorLegend";
-import { Edit, Plus, AlertTriangle, Lock } from "lucide-react";
+import { Edit, Plus, AlertTriangle, Lock, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TimetableViewProps {
@@ -398,18 +398,28 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
 
       {view === "master" && <ClassColorLegend classes={classes ?? []} />}
 
+      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2 px-1">
+        <div className="flex items-center gap-1.5 font-medium">
+          <Calendar className="h-3.5 w-3.5 text-primary" />
+          <span>Timetable Layout: <strong>Days (Mon – Sat) Sideways</strong> &bull; <strong>Time Slots Vertical</strong></span>
+        </div>
+        <div className="hidden sm:block text-[11px] text-muted-foreground">
+          {teachingTimeSlots.length} Teaching Slots / Day
+        </div>
+      </div>
+
       <div className="bg-card rounded-md shadow overflow-auto">
         <div className="min-w-[768px]">
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="border border-gray-300 dark:border-gray-700 p-2 bg-muted/60 text-foreground w-32 font-semibold">
-                  Time
+                <th className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/70 text-foreground w-36 font-semibold text-xs tracking-wider uppercase">
+                  Time Slot
                 </th>
                 {(daysOfWeek ?? []).map((day) => (
                   <th
                     key={day}
-                    className="border border-gray-300 dark:border-gray-700 p-2 bg-muted/60 text-foreground font-semibold"
+                    className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/70 text-foreground font-semibold text-xs tracking-wider uppercase"
                   >
                     {day}
                   </th>
@@ -417,7 +427,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
               </tr>
             </thead>
             <tbody>
-              {(teachingTimeSlots ?? []).map((timeSlot) => {
+              {(teachingTimeSlots ?? []).map((timeSlot, slotIdx) => {
                 const nextBreak = (breakTimeSlots ?? []).find(
                   (b) =>
                     ((b as any)?.startTime && (b as any).startTime === (timeSlot as any)?.endTime) ||
@@ -428,9 +438,12 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                     key={timeSlot?.id ?? `${(timeSlot as any)?.startTime}-${(timeSlot as any)?.endTime}`}
                   >
                     <tr>
-                      <td className="border border-gray-300 dark:border-gray-700 p-2 bg-muted/40 text-foreground w-32 text-xs font-medium">
-                        {formatTime((timeSlot as any)?.startTime ?? (timeSlot as any)?.start_time)} –{" "}
-                        {formatTime((timeSlot as any)?.endTime ?? (timeSlot as any)?.end_time)}
+                      <td className="border border-gray-300 dark:border-gray-700 p-2 bg-muted/40 text-foreground w-36 text-xs font-medium">
+                        <div className="text-[11px] font-bold text-primary">Period {slotIdx + 1}</div>
+                        <div className="text-[11px] text-muted-foreground whitespace-nowrap">
+                          {formatTime((timeSlot as any)?.startTime ?? (timeSlot as any)?.start_time)} –{" "}
+                          {formatTime((timeSlot as any)?.endTime ?? (timeSlot as any)?.end_time)}
+                        </div>
                       </td>
                       {(daysOfWeek ?? []).map((_, dayIndex) => (
                         <td
@@ -442,19 +455,20 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                       ))}
                     </tr>
                     {nextBreak && (
-                      <tr className="bg-muted/40">
-                        <td className="border border-gray-300 dark:border-gray-700 p-2 text-xs font-semibold text-foreground whitespace-nowrap">
-                          {formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} –{" "}
-                          {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)}
+                      <tr className="bg-muted/50 border-y border-dashed border-gray-300 dark:border-gray-700">
+                        <td className="border border-gray-300 dark:border-gray-700 p-2 text-xs font-semibold text-foreground whitespace-nowrap bg-muted/60">
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Break</span>
+                          <div className="text-[10px] text-muted-foreground">
+                            {formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} –{" "}
+                            {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)}
+                          </div>
                         </td>
-                        {(daysOfWeek ?? []).map((_, dayIndex) => (
-                          <td
-                            key={`break-${nextBreak?.id}-${dayIndex}`}
-                            className="border border-gray-300 dark:border-gray-700 p-1 align-top"
-                          >
-                            {renderCell(dayIndex, nextBreak as TimeSlot)}
-                          </td>
-                        ))}
+                        <td
+                          colSpan={daysOfWeek.length}
+                          className="border border-gray-300 dark:border-gray-700 p-2 text-center text-xs font-medium text-muted-foreground bg-muted/30 italic"
+                        >
+                          ☕ Recess / Institutional Break ({formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} – {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)})
+                        </td>
                       </tr>
                     )}
                   </React.Fragment>

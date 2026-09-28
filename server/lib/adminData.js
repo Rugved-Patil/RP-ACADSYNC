@@ -1,7 +1,7 @@
 // adminData.js — Administration data management features:
-// 1. mergeSampleData(): Seamlessly merges additional sample institutional data
-//    (years, classes, teachers, subjects, classrooms, assignments, and logins)
-//    without overwriting or duplicating existing data.
+// 1. mergeSampleData(): Generates and seamlessly merges a new batch of unique sample
+//    academic institutional data (departments, classes, faculty, subjects, labs,
+//    assignments, and user logins) with each press of the button.
 // 2. killSwitch(): Safely wipes all timetables, lessons, change requests,
 //    assignments, classes, teachers, subjects, timings, and classrooms,
 //    preserving the active admin user account.
@@ -10,9 +10,264 @@ const { randomUUID } = require("node:crypto");
 const { db } = require("../db");
 const { createUser } = require("./auth");
 
+// Catalog of unique academic departments for multi-batch generation
+const DEPARTMENTS_CATALOG = [
+  {
+    code: "CS",
+    name: "Computer Engineering (Advanced Batch)",
+    yearNames: ["Third Year (TE)", "Final Year (BE)"],
+    classes: [
+      { name: "TE-CS-A", year: "Third Year (TE)", capacity: 60, student_count: 56 },
+      { name: "TE-CS-B", year: "Third Year (TE)", capacity: 60, student_count: 54 },
+      { name: "BE-CS-A", year: "Final Year (BE)", capacity: 60, student_count: 58 },
+      { name: "BE-CS-B", year: "Final Year (BE)", capacity: 60, student_count: 57 },
+    ],
+    teachers: [
+      { name: "Dr. Sunita Rao", email: "sunita.rao@institution.edu", specialization: "Cloud Computing & Distributed Systems" },
+      { name: "Prof. Rohan Patil", email: "rohan.patil@institution.edu", specialization: "Artificial Intelligence & Deep Learning" },
+      { name: "Prof. Neha Gupta", email: "neha.gupta@institution.edu", specialization: "Compiler Construction & NLP" },
+      { name: "Prof. Anand Kadam", email: "anand.kadam@institution.edu", specialization: "Cybersecurity & Blockchain" },
+    ],
+    subjects: [
+      { name: "Artificial Intelligence", code: "CS401", periods: 3, is_lab: 0 },
+      { name: "AI & Deep Learning Lab", code: "CS401L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Cloud Computing Architecture", code: "CS402", periods: 3, is_lab: 0 },
+      { name: "Cloud Practicum Lab", code: "CS402L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Compiler Construction", code: "CS501", periods: 3, is_lab: 0 },
+      { name: "Information & Cyber Security", code: "CS502", periods: 3, is_lab: 0 },
+    ],
+    classrooms: [
+      { name: "LH-301", capacity: 70, is_lab: 0, location: "Block B, 1st Floor", equipment: "Projector, AC, Smart Board" },
+      { name: "LH-302", capacity: 70, is_lab: 0, location: "Block B, 1st Floor", equipment: "Projector, AC" },
+      { name: "Lab 3 - Cloud Computing & AI Lab", capacity: 40, is_lab: 1, location: "CS Block, 3rd Floor", equipment: "40 GPU Workstations, Cloud Server Rack" },
+      { name: "Seminar Hall B", capacity: 120, is_lab: 0, location: "Block B, Ground Floor", equipment: "Surround Sound, Dual 4K Projectors" },
+    ],
+  },
+  {
+    code: "IT",
+    name: "Information Technology",
+    yearNames: ["Second Year (SE)", "Third Year (TE)", "Final Year (BE)"],
+    classes: [
+      { name: "SE-IT-A", year: "Second Year (SE)", capacity: 60, student_count: 58 },
+      { name: "SE-IT-B", year: "Second Year (SE)", capacity: 60, student_count: 57 },
+      { name: "TE-IT-A", year: "Third Year (TE)", capacity: 60, student_count: 55 },
+      { name: "TE-IT-B", year: "Third Year (TE)", capacity: 60, student_count: 54 },
+    ],
+    teachers: [
+      { name: "Dr. Ramesh Joshi", email: "ramesh.joshi@institution.edu", specialization: "Cloud & Distributed Systems" },
+      { name: "Prof. Neha Deshpande", email: "neha.deshpande@institution.edu", specialization: "Full-Stack Web Architectures" },
+      { name: "Prof. Rahul Kulkarni", email: "rahul.kulkarni@institution.edu", specialization: "Information Security & Cryptography" },
+      { name: "Dr. Anjali Patil", email: "anjali.patil@institution.edu", specialization: "DevOps & Software Testing" },
+    ],
+    subjects: [
+      { name: "Web Systems & Microservices", code: "IT301", periods: 3, is_lab: 0 },
+      { name: "Web Engineering Lab", code: "IT301L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Cloud Infrastructure Management", code: "IT302", periods: 3, is_lab: 0 },
+      { name: "Cloud Practicum Lab", code: "IT302L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Distributed Database Engines", code: "IT401", periods: 3, is_lab: 0 },
+      { name: "Network Forensics & Defense", code: "IT402", periods: 3, is_lab: 0 },
+    ],
+    classrooms: [
+      { name: "LH-401 (IT Lecture Hall)", capacity: 70, is_lab: 0, location: "Block C, 1st Floor", equipment: "4K Laser Projector, Smart Podium" },
+      { name: "LH-402 (IT Lecture Hall)", capacity: 70, is_lab: 0, location: "Block C, 1st Floor", equipment: "Projector, AC" },
+      { name: "Lab 4 - Cloud & Web Studio", capacity: 40, is_lab: 1, location: "Block C, 2nd Floor", equipment: "40 Dell Core-i9 Workstations, Gigabit Switch" },
+    ],
+  },
+  {
+    code: "AIDS",
+    name: "Artificial Intelligence & Data Science",
+    yearNames: ["First Year (FE)", "Second Year (SE)", "Third Year (TE)"],
+    classes: [
+      { name: "FE-AIDS-A", year: "First Year (FE)", capacity: 60, student_count: 60 },
+      { name: "SE-AIDS-A", year: "Second Year (SE)", capacity: 60, student_count: 59 },
+      { name: "SE-AIDS-B", year: "Second Year (SE)", capacity: 60, student_count: 58 },
+      { name: "TE-AIDS-A", year: "Third Year (TE)", capacity: 60, student_count: 56 },
+    ],
+    teachers: [
+      { name: "Dr. Arvind Swaminathan", email: "arvind.swaminathan@institution.edu", specialization: "Natural Language Processing & LLMs" },
+      { name: "Prof. Kavita Nair", email: "kavita.nair@institution.edu", specialization: "Big Data Analytics & PySpark" },
+      { name: "Prof. Yashwant Shenoy", email: "yashwant.shenoy@institution.edu", specialization: "Computer Vision & GANs" },
+      { name: "Dr. Gauri Ranade", email: "gauri.ranade@institution.edu", specialization: "Reinforcement Learning & Robotics" },
+    ],
+    subjects: [
+      { name: "Deep Neural Networks", code: "AD301", periods: 3, is_lab: 0 },
+      { name: "Deep Learning Lab", code: "AD301L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Big Data Processing & Hadoop", code: "AD302", periods: 3, is_lab: 0 },
+      { name: "Big Data Lab", code: "AD302L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Computer Vision & Processing", code: "AD401", periods: 3, is_lab: 0 },
+      { name: "Natural Language Processing", code: "AD402", periods: 3, is_lab: 0 },
+    ],
+    classrooms: [
+      { name: "LH-501 (AI Auditorium)", capacity: 90, is_lab: 0, location: "Block D, Ground Floor", equipment: "Dual Projectors, Dolby Surround, Smart Board" },
+      { name: "Lab 5 - AI Supercomputing Lab", capacity: 40, is_lab: 1, location: "Block D, 1st Floor", equipment: "40 NVIDIA RTX 4090 Workstations, TensorRT" },
+    ],
+  },
+  {
+    code: "ENTC",
+    name: "Electronics & Telecommunication",
+    yearNames: ["First Year (FE)", "Second Year (SE)", "Third Year (TE)", "Final Year (BE)"],
+    classes: [
+      { name: "FE-ENTC-A", year: "First Year (FE)", capacity: 60, student_count: 55 },
+      { name: "SE-ENTC-A", year: "Second Year (SE)", capacity: 60, student_count: 54 },
+      { name: "TE-ENTC-A", year: "Third Year (TE)", capacity: 60, student_count: 52 },
+      { name: "BE-ENTC-A", year: "Final Year (BE)", capacity: 60, student_count: 50 },
+    ],
+    teachers: [
+      { name: "Dr. Hemant Shah", email: "hemant.shah@institution.edu", specialization: "VLSI Design & Embedded Systems" },
+      { name: "Prof. Pooja Sen", email: "pooja.sen@institution.edu", specialization: "Digital Signal Processing & Filter Design" },
+      { name: "Prof. Sanjay Verma", email: "sanjay.verma@institution.edu", specialization: "Wireless & 5G Cellular Networks" },
+      { name: "Dr. Meenakshi Iyer", email: "meenakshi.iyer@institution.edu", specialization: "Optical Fiber & Satellite Communications" },
+    ],
+    subjects: [
+      { name: "Digital Signal Processing", code: "EC201", periods: 3, is_lab: 0 },
+      { name: "DSP Hardware Lab", code: "EC201L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "VLSI Architecture & Verilog", code: "EC301", periods: 3, is_lab: 0 },
+      { name: "VLSI CAD Simulation Lab", code: "EC301L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Wireless Cellular Networks", code: "EC401", periods: 3, is_lab: 0 },
+    ],
+    classrooms: [
+      { name: "LH-203 (ENTC Hall)", capacity: 70, is_lab: 0, location: "Block E, 1st Floor", equipment: "Projector, Audio Setup" },
+      { name: "Lab 6 - IoT & Embedded Systems Lab", capacity: 35, is_lab: 1, location: "Block E, 2nd Floor", equipment: "35 FPGA Kits, Digital Oscilloscopes, ARM Boards" },
+    ],
+  },
+  {
+    code: "CYBER",
+    name: "Cyber Security & Digital Forensics",
+    yearNames: ["Second Year (SE)", "Third Year (TE)", "Final Year (BE)"],
+    classes: [
+      { name: "SE-CYBER-A", year: "Second Year (SE)", capacity: 60, student_count: 58 },
+      { name: "TE-CYBER-A", year: "Third Year (TE)", capacity: 60, student_count: 57 },
+      { name: "BE-CYBER-A", year: "Final Year (BE)", capacity: 60, student_count: 55 },
+    ],
+    teachers: [
+      { name: "Dr. Jitendra Saxena", email: "jitendra.saxena@institution.edu", specialization: "Ethical Hacking & Penetration Testing" },
+      { name: "Prof. Swati Bhat", email: "swati.bhat@institution.edu", specialization: "Malware Analysis & Reverse Engineering" },
+      { name: "Dr. Vivek Chawla", email: "vivek.chawla@institution.edu", specialization: "Applied Cryptography & Blockchain Protocols" },
+    ],
+    subjects: [
+      { name: "Ethical Hacking & Defense", code: "CY301", periods: 3, is_lab: 0 },
+      { name: "Ethical Hacking Lab", code: "CY301L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Malware Analysis & Forensics", code: "CY302", periods: 3, is_lab: 0 },
+      { name: "Applied Cryptography", code: "CY401", periods: 3, is_lab: 0 },
+    ],
+    classrooms: [
+      { name: "LH-403 (Security Hall)", capacity: 70, is_lab: 0, location: "Block C, 3rd Floor", equipment: "Smart Interactive Screen, Sound System" },
+      { name: "Lab 7 - SOC Defense & Cyber Range", capacity: 35, is_lab: 1, location: "Block C, 3rd Floor", equipment: "Isolated Cyber Range, Wireshark Packet Inspection Server" },
+    ],
+  },
+  {
+    code: "ROB",
+    name: "Robotics & Industrial Automation",
+    yearNames: ["Second Year (SE)", "Third Year (TE)", "Final Year (BE)"],
+    classes: [
+      { name: "SE-ROB-A", year: "Second Year (SE)", capacity: 60, student_count: 52 },
+      { name: "TE-ROB-A", year: "Third Year (TE)", capacity: 60, student_count: 50 },
+      { name: "BE-ROB-A", year: "Final Year (BE)", capacity: 60, student_count: 48 },
+    ],
+    teachers: [
+      { name: "Dr. Chetan Pande", email: "chetan.pande@institution.edu", specialization: "Robot Kinematics & ROS Framework" },
+      { name: "Prof. Shruti Dixit", email: "shruti.dixit@institution.edu", specialization: "Industrial Automation & PLC Scada" },
+      { name: "Dr. Nikhil Gaikwad", email: "nikhil.gaikwad@institution.edu", specialization: "Autonomous Mobile Robots & SLAM" },
+    ],
+    subjects: [
+      { name: "Industrial Automation & PLC", code: "RO301", periods: 3, is_lab: 0 },
+      { name: "Robotics Programming Lab", code: "RO301L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Autonomous Mobile Robotics", code: "RO302", periods: 3, is_lab: 0 },
+    ],
+    classrooms: [
+      { name: "LH-503 (Robotics Hall)", capacity: 60, is_lab: 0, location: "Block F, 1st Floor", equipment: "Projector, Demonstration Arena" },
+      { name: "Lab 8 - Robotics Prototyping Lab", capacity: 30, is_lab: 1, location: "Block F, Ground Floor", equipment: "6-Axis Robot Arms, 3D Printers, Siemens PLC Racks" },
+    ],
+  },
+  {
+    code: "MECH",
+    name: "Mechanical Engineering & Mechatronics",
+    yearNames: ["First Year (FE)", "Second Year (SE)", "Third Year (TE)"],
+    classes: [
+      { name: "FE-MECH-A", year: "First Year (FE)", capacity: 60, student_count: 60 },
+      { name: "SE-MECH-A", year: "Second Year (SE)", capacity: 60, student_count: 58 },
+      { name: "TE-MECH-A", year: "Third Year (TE)", capacity: 60, student_count: 56 },
+    ],
+    teachers: [
+      { name: "Dr. Anil Shinde", email: "anil.shinde@institution.edu", specialization: "Thermodynamics & Heat Transfer" },
+      { name: "Prof. Mahesh Jadhav", email: "mahesh.jadhav@institution.edu", specialization: "CAD/CAM & Finite Element Analysis" },
+      { name: "Dr. Rajesh Bhosale", email: "rajesh.bhosale@institution.edu", specialization: "Fluid Power Systems & Hydraulics" },
+    ],
+    subjects: [
+      { name: "Thermodynamics & Heat Transfer", code: "ME201", periods: 3, is_lab: 0 },
+      { name: "CAD/CAM Simulation Lab", code: "ME201L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Fluid Mechanics & Machinery", code: "ME202", periods: 3, is_lab: 0 },
+    ],
+    classrooms: [
+      { name: "LH-103 (Mechanical Hall)", capacity: 70, is_lab: 0, location: "Block G, Ground Floor", equipment: "Projector, Drafting Tables" },
+      { name: "Lab 9 - CAD/CAM Simulation Center", capacity: 35, is_lab: 1, location: "Block G, 1st Floor", equipment: "35 High-Precision Workstations with SolidWorks/ANSYS" },
+    ],
+  },
+  {
+    code: "CSBS",
+    name: "Computer Science & Business Systems",
+    yearNames: ["First Year (FE)", "Second Year (SE)", "Third Year (TE)"],
+    classes: [
+      { name: "FE-CSBS-A", year: "First Year (FE)", capacity: 60, student_count: 58 },
+      { name: "SE-CSBS-A", year: "Second Year (SE)", capacity: 60, student_count: 56 },
+      { name: "TE-CSBS-A", year: "Third Year (TE)", capacity: 60, student_count: 54 },
+    ],
+    teachers: [
+      { name: "Dr. Pallavi Gore", email: "pallavi.gore@institution.edu", specialization: "FinTech & Algorithmic Trading" },
+      { name: "Prof. Tarun Sen", email: "tarun.sen@institution.edu", specialization: "Enterprise System Architecture" },
+      { name: "Dr. Alok Bhatnagar", email: "alok.bhatnagar@institution.edu", specialization: "Business Intelligence & Predictive Analytics" },
+    ],
+    subjects: [
+      { name: "Financial Engineering & FinTech", code: "CB201", periods: 3, is_lab: 0 },
+      { name: "Business Analytics Studio Lab", code: "CB201L", periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: "Enterprise Resource Planning", code: "CB301", periods: 3, is_lab: 0 },
+    ],
+    classrooms: [
+      { name: "LH-303 (Business Studio)", capacity: 70, is_lab: 0, location: "Block H, 2nd Floor", equipment: "Dual Displays, Interactive Podium" },
+      { name: "Lab 10 - FinTech & Analytics Lab", capacity: 35, is_lab: 1, location: "Block H, 2nd Floor", equipment: "Bloomberg Terminal Access, Data Workstations" },
+    ],
+  },
+];
+
 /**
- * Merges additional sample institutional data into the SQLite database.
- * Idempotent: checks for existing names/codes/emails to avoid duplicates.
+ * Returns a dynamically synthesized unique department definition if all predefined
+ * departments have already been generated in the database.
+ */
+function generateDynamicDepartment(iterationIndex) {
+  const code = `D${iterationIndex}`;
+  const name = `Advanced Engineering & Technology (Track ${iterationIndex})`;
+  return {
+    code,
+    name,
+    yearNames: ["First Year (FE)", "Second Year (SE)", "Third Year (TE)", "Final Year (BE)"],
+    classes: [
+      { name: `FE-${code}-A`, year: "First Year (FE)", capacity: 60, student_count: 58 },
+      { name: `FE-${code}-B`, year: "First Year (FE)", capacity: 60, student_count: 57 },
+      { name: `SE-${code}-A`, year: "Second Year (SE)", capacity: 60, student_count: 56 },
+      { name: `TE-${code}-A`, year: "Third Year (TE)", capacity: 60, student_count: 55 },
+    ],
+    teachers: [
+      { name: `Dr. Academic Lead ${iterationIndex}`, email: `lead.${code.toLowerCase()}@institution.edu`, specialization: `Advanced Systems Track ${iterationIndex}` },
+      { name: `Prof. Specialist ${iterationIndex}A`, email: `spec.${code.toLowerCase()}a@institution.edu`, specialization: `Specialized Computing ${iterationIndex}` },
+      { name: `Prof. Specialist ${iterationIndex}B`, email: `spec.${code.toLowerCase()}b@institution.edu`, specialization: `Applied Analytics ${iterationIndex}` },
+    ],
+    subjects: [
+      { name: `Core Principles of Track ${iterationIndex}`, code: `${code}101`, periods: 3, is_lab: 0 },
+      { name: `Track ${iterationIndex} Practical Lab`, code: `${code}101L`, periods: 2, is_lab: 1, lab_duration_hours: 2 },
+      { name: `Advanced Methods in Track ${iterationIndex}`, code: `${code}201`, periods: 3, is_lab: 0 },
+      { name: `Applied Systems Lab ${iterationIndex}`, code: `${code}201L`, periods: 2, is_lab: 1, lab_duration_hours: 2 },
+    ],
+    classrooms: [
+      { name: `LH-${600 + iterationIndex}`, capacity: 70, is_lab: 0, location: `Engineering Wing ${iterationIndex}`, equipment: "Smart Board, High-Lumen Projector" },
+      { name: `Lab ${10 + iterationIndex} - Research Facility`, capacity: 35, is_lab: 1, location: `Wing ${iterationIndex} Lab Complex`, equipment: "Modern High-Performance Compute Workstations" },
+    ],
+  };
+}
+
+/**
+ * Merges a brand new batch of unique sample institutional data with EACH invocation.
+ * Automatically discovers the next unrepresented department or generates a new track,
+ * adding unique classes, faculty, subjects, rooms, assignments, and user accounts.
  */
 function mergeSampleData() {
   const now = new Date().toISOString();
@@ -25,43 +280,52 @@ function mergeSampleData() {
   let addedUsers = 0;
 
   return db.transaction(() => {
-    // 1. Academic Years (TE and BE if not already present)
-    const targetYears = [
-      { name: "Third Year (TE)" },
-      { name: "Final Year (BE)" },
-    ];
+    // 1. Determine which department to generate next based on existing classes
+    const existingClasses = db.prepare("SELECT name FROM classes").all().map((c) => c.name);
+    
+    let deptToGenerate = DEPARTMENTS_CATALOG.find((dept) => {
+      // If this department's batch classes have not been added yet, generate this department
+      return !dept.classes.some((c) => existingClasses.includes(c.name));
+    });
 
+    if (!deptToGenerate) {
+      // If all predefined departments exist, generate a unique sequential department track
+      let maxTrack = 0;
+      for (const name of existingClasses) {
+        const match = name.match(/D(\d+)/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxTrack) maxTrack = num;
+        }
+      }
+      deptToGenerate = generateDynamicDepartment(maxTrack + 1);
+    }
+
+    // 2. Ensure Required Academic Years exist
     const yearMap = new Map();
-    for (const y of targetYears) {
-      const existing = db.prepare("SELECT id FROM years WHERE name = ?").get(y.name);
-      if (existing) {
-        yearMap.set(y.name, existing.id);
-      } else {
+    const existingYears = db.prepare("SELECT id, name FROM years").all();
+    existingYears.forEach((y) => yearMap.set(y.name, y.id));
+
+    for (const yearName of deptToGenerate.yearNames) {
+      if (!yearMap.has(yearName)) {
         const id = randomUUID();
         db.prepare(
           "INSERT INTO years (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)"
-        ).run(id, y.name, now, now);
-        yearMap.set(y.name, id);
+        ).run(id, yearName, now, now);
+        yearMap.set(yearName, id);
         addedYears++;
       }
     }
 
-    // 2. Classes
-    const targetClasses = [
-      { name: "TE-CS-A", yearName: "Third Year (TE)", capacity: 60, student_count: 56 },
-      { name: "TE-CS-B", yearName: "Third Year (TE)", capacity: 60, student_count: 54 },
-      { name: "BE-CS-A", yearName: "Final Year (BE)", capacity: 60, student_count: 58 },
-      { name: "BE-CS-B", yearName: "Final Year (BE)", capacity: 60, student_count: 57 },
-    ];
-
+    // 3. Insert Classes
     const classMap = new Map();
-    for (const c of targetClasses) {
+    for (const c of deptToGenerate.classes) {
       const existing = db.prepare("SELECT id FROM classes WHERE name = ?").get(c.name);
       if (existing) {
         classMap.set(c.name, existing.id);
       } else {
         const id = randomUUID();
-        const yearId = yearMap.get(c.yearName);
+        const yearId = yearMap.get(c.year) || null;
         db.prepare(
           "INSERT INTO classes (id, name, year_id, capacity, student_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
         ).run(id, c.name, yearId, c.capacity, c.student_count, now, now);
@@ -70,40 +334,9 @@ function mergeSampleData() {
       }
     }
 
-    // 3. Classrooms
-    const targetClassrooms = [
-      {
-        name: "LH-301",
-        capacity: 70,
-        is_lab: 0,
-        location: "Block B, 1st Floor",
-        equipment: "Projector, AC, Smart Board",
-      },
-      {
-        name: "LH-302",
-        capacity: 70,
-        is_lab: 0,
-        location: "Block B, 1st Floor",
-        equipment: "Projector, AC",
-      },
-      {
-        name: "Lab 3 - Cloud Computing & AI Lab",
-        capacity: 40,
-        is_lab: 1,
-        location: "CS Block, 3rd Floor",
-        equipment: "40 GPU Workstations, Cloud Server Rack, Gigabit LAN",
-      },
-      {
-        name: "Seminar Hall B",
-        capacity: 120,
-        is_lab: 0,
-        location: "Block B, Ground Floor",
-        equipment: "Surround Sound, Dual 4K Projectors, Smart Podium",
-      },
-    ];
-
+    // 4. Insert Classrooms & Labs
     const classroomMap = new Map();
-    for (const r of targetClassrooms) {
+    for (const r of deptToGenerate.classrooms) {
       const existing = db.prepare("SELECT id FROM classrooms WHERE name = ?").get(r.name);
       if (existing) {
         classroomMap.set(r.name, existing.id);
@@ -117,61 +350,9 @@ function mergeSampleData() {
       }
     }
 
-    // 4. Default Class-Classroom Assignments
-    const targetClassRoomAssignments = [
-      { className: "TE-CS-A", roomName: "LH-301" },
-      { className: "TE-CS-B", roomName: "LH-302" },
-      { className: "BE-CS-A", roomName: "Seminar Hall B" },
-      { className: "BE-CS-B", roomName: "LH-301" },
-    ];
-    for (const cra of targetClassRoomAssignments) {
-      const classId = classMap.get(cra.className);
-      const roomId = classroomMap.get(cra.roomName);
-      if (classId && roomId) {
-        const existing = db
-          .prepare(
-            "SELECT id FROM class_classroom_assignments WHERE class_id = ? AND classroom_id = ?"
-          )
-          .get(classId, roomId);
-        if (!existing) {
-          db.prepare(
-            "INSERT INTO class_classroom_assignments (id, class_id, classroom_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
-          ).run(randomUUID(), classId, roomId, now, now);
-          addedAssignments++;
-        }
-      }
-    }
-
-    // 5. Teachers
-    const targetTeachers = [
-      {
-        name: "Dr. Sunita Rao",
-        email: "sunita.rao@institution.edu",
-        specialization: "Cloud Computing & Distributed Systems",
-        max_periods_per_day: 4,
-      },
-      {
-        name: "Prof. Rohan Patil",
-        email: "rohan.patil@institution.edu",
-        specialization: "Artificial Intelligence & Deep Learning",
-        max_periods_per_day: 4,
-      },
-      {
-        name: "Prof. Neha Gupta",
-        email: "neha.gupta@institution.edu",
-        specialization: "Compiler Construction & NLP",
-        max_periods_per_day: 4,
-      },
-      {
-        name: "Prof. Anand Kadam",
-        email: "anand.kadam@institution.edu",
-        specialization: "Cybersecurity & Blockchain",
-        max_periods_per_day: 4,
-      },
-    ];
-
+    // 5. Insert Teachers & Provision Teacher Accounts
     const teacherMap = new Map();
-    for (const t of targetTeachers) {
+    for (const t of deptToGenerate.teachers) {
       const existing = db.prepare("SELECT id FROM teachers WHERE email = ?").get(t.email);
       let teacherId;
       if (existing) {
@@ -180,12 +361,12 @@ function mergeSampleData() {
         teacherId = randomUUID();
         db.prepare(
           "INSERT INTO teachers (id, name, email, specialization, max_periods_per_day, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        ).run(teacherId, t.name, t.email, t.specialization, t.max_periods_per_day, now, now);
+        ).run(teacherId, t.name, t.email, t.specialization, 4, now, now);
         addedTeachers++;
       }
       teacherMap.set(t.email, teacherId);
 
-      // Provision teacher login user account
+      // User account for teacher
       const existingUser = db.prepare("SELECT id FROM users WHERE email = ?").get(t.email);
       if (!existingUser) {
         createUser({
@@ -199,8 +380,8 @@ function mergeSampleData() {
       }
     }
 
-    // Provision student accounts for new classes
-    for (const c of targetClasses) {
+    // 6. Provision Student Accounts for new classes
+    for (const c of deptToGenerate.classes) {
       const classId = classMap.get(c.name);
       const classSlug = c.name.toLowerCase().replace(/[^a-z0-9]/g, "");
       const studentEmail = `student.${classSlug}@acadsync.edu`;
@@ -217,54 +398,9 @@ function mergeSampleData() {
       }
     }
 
-    // 6. Subjects
-    const targetSubjects = [
-      {
-        name: "Artificial Intelligence",
-        code: "CS401",
-        periods_per_week: 3,
-        is_lab: 0,
-        lab_duration_hours: 1,
-      },
-      {
-        name: "AI & Deep Learning Lab",
-        code: "CS401L",
-        periods_per_week: 2,
-        is_lab: 1,
-        lab_duration_hours: 2,
-      },
-      {
-        name: "Cloud Computing Architecture",
-        code: "CS402",
-        periods_per_week: 3,
-        is_lab: 0,
-        lab_duration_hours: 1,
-      },
-      {
-        name: "Cloud Practicum Lab",
-        code: "CS402L",
-        periods_per_week: 2,
-        is_lab: 1,
-        lab_duration_hours: 2,
-      },
-      {
-        name: "Compiler Construction",
-        code: "CS501",
-        periods_per_week: 3,
-        is_lab: 0,
-        lab_duration_hours: 1,
-      },
-      {
-        name: "Information & Cyber Security",
-        code: "CS502",
-        periods_per_week: 3,
-        is_lab: 0,
-        lab_duration_hours: 1,
-      },
-    ];
-
+    // 7. Insert Subjects
     const subjectMap = new Map();
-    for (const s of targetSubjects) {
+    for (const s of deptToGenerate.subjects) {
       const existing = db.prepare("SELECT id FROM subjects WHERE code = ?").get(s.code);
       let subjectId;
       if (existing) {
@@ -273,92 +409,66 @@ function mergeSampleData() {
         subjectId = randomUUID();
         db.prepare(
           "INSERT INTO subjects (id, name, code, periods_per_week, is_lab, lab_duration_hours, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        ).run(subjectId, s.name, s.code, s.periods_per_week, s.is_lab, s.lab_duration_hours, now, now);
+        ).run(subjectId, s.name, s.code, s.periods, s.is_lab, s.lab_duration_hours || 1, now, now);
         addedSubjects++;
       }
       subjectMap.set(s.code, subjectId);
     }
 
-    // 7. Teacher-Subject Assignments
-    const targetTeacherSubjects = [
-      { teacherEmail: "sunita.rao@institution.edu", subjectCode: "CS402" },
-      { teacherEmail: "sunita.rao@institution.edu", subjectCode: "CS402L" },
-      { teacherEmail: "rohan.patil@institution.edu", subjectCode: "CS401" },
-      { teacherEmail: "rohan.patil@institution.edu", subjectCode: "CS401L" },
-      { teacherEmail: "neha.gupta@institution.edu", subjectCode: "CS501" },
-      { teacherEmail: "neha.gupta@institution.edu", subjectCode: "CS401L" },
-      { teacherEmail: "anand.kadam@institution.edu", subjectCode: "CS502" },
-    ];
+    // 8. Assign Teachers to Subjects
+    const teachersList = Array.from(teacherMap.values());
+    const subjectsList = Array.from(subjectMap.values());
+    for (let i = 0; i < subjectsList.length; i++) {
+      const sId = subjectsList[i];
+      const tId = teachersList[i % teachersList.length];
+      const existing = db.prepare(
+        "SELECT id FROM teacher_subject_assignments WHERE teacher_id = ? AND subject_id = ?"
+      ).get(tId, sId);
+      if (!existing) {
+        db.prepare(
+          "INSERT INTO teacher_subject_assignments (id, teacher_id, subject_id, created_at) VALUES (?, ?, ?, ?)"
+        ).run(randomUUID(), tId, sId, now);
+        addedAssignments++;
+      }
+    }
 
-    for (const ts of targetTeacherSubjects) {
-      const tId = teacherMap.get(ts.teacherEmail);
-      const sId = subjectMap.get(ts.subjectCode);
-      if (tId && sId) {
-        const existing = db
-          .prepare(
-            "SELECT id FROM teacher_subject_assignments WHERE teacher_id = ? AND subject_id = ?"
-          )
-          .get(tId, sId);
+    // 9. Assign Subjects to Classes
+    const classesList = Array.from(classMap.values());
+    for (const cId of classesList) {
+      for (const sId of subjectsList) {
+        const existing = db.prepare(
+          "SELECT id FROM subject_class_assignments WHERE subject_id = ? AND class_id = ?"
+        ).get(sId, cId);
         if (!existing) {
           db.prepare(
-            "INSERT INTO teacher_subject_assignments (id, teacher_id, subject_id, created_at) VALUES (?, ?, ?, ?)"
-          ).run(randomUUID(), tId, sId, now);
+            "INSERT INTO subject_class_assignments (id, subject_id, class_id, created_at) VALUES (?, ?, ?, ?)"
+          ).run(randomUUID(), sId, cId, now);
           addedAssignments++;
         }
       }
     }
 
-    // 8. Subject-Class Assignments
-    // TE classes get CS401, CS401L, CS402, CS402L
-    const teCodes = ["CS401", "CS401L", "CS402", "CS402L"];
-    for (const className of ["TE-CS-A", "TE-CS-B"]) {
-      const cId = classMap.get(className);
-      if (cId) {
-        for (const code of teCodes) {
-          const sId = subjectMap.get(code);
-          if (sId) {
-            const existing = db
-              .prepare(
-                "SELECT id FROM subject_class_assignments WHERE subject_id = ? AND class_id = ?"
-              )
-              .get(sId, cId);
-            if (!existing) {
-              db.prepare(
-                "INSERT INTO subject_class_assignments (id, subject_id, class_id, created_at) VALUES (?, ?, ?, ?)"
-              ).run(randomUUID(), sId, cId, now);
-              addedAssignments++;
-            }
-          }
-        }
-      }
-    }
-
-    // BE classes get CS501, CS502
-    const beCodes = ["CS501", "CS502"];
-    for (const className of ["BE-CS-A", "BE-CS-B"]) {
-      const cId = classMap.get(className);
-      if (cId) {
-        for (const code of beCodes) {
-          const sId = subjectMap.get(code);
-          if (sId) {
-            const existing = db
-              .prepare(
-                "SELECT id FROM subject_class_assignments WHERE subject_id = ? AND class_id = ?"
-              )
-              .get(sId, cId);
-            if (!existing) {
-              db.prepare(
-                "INSERT INTO subject_class_assignments (id, subject_id, class_id, created_at) VALUES (?, ?, ?, ?)"
-              ).run(randomUUID(), sId, cId, now);
-              addedAssignments++;
-            }
-          }
+    // 10. Assign Classrooms to Classes
+    const classroomsList = Array.from(classroomMap.values());
+    if (classroomsList.length > 0) {
+      for (let i = 0; i < classesList.length; i++) {
+        const cId = classesList[i];
+        const rId = classroomsList[i % classroomsList.length];
+        const existing = db.prepare(
+          "SELECT id FROM class_classroom_assignments WHERE class_id = ? AND classroom_id = ?"
+        ).get(cId, rId);
+        if (!existing) {
+          db.prepare(
+            "INSERT INTO class_classroom_assignments (id, class_id, classroom_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
+          ).run(randomUUID(), cId, rId, now, now);
+          addedAssignments++;
         }
       }
     }
 
     return {
       success: true,
+      batchName: deptToGenerate.name,
       stats: {
         addedYears,
         addedClasses,
@@ -368,7 +478,7 @@ function mergeSampleData() {
         addedAssignments,
         addedUsers,
       },
-      message: `Successfully merged sample data: ${addedClasses} classes, ${addedTeachers} faculty, ${addedSubjects} subjects, and ${addedClassrooms} classrooms.`,
+      message: `Generated and merged ${deptToGenerate.name}: ${addedClasses} new classes, ${addedTeachers} faculty, ${addedSubjects} subjects, and ${addedClassrooms} classrooms.`,
     };
   })();
 }
@@ -429,4 +539,5 @@ function killSwitch(currentAdminId) {
 module.exports = {
   mergeSampleData,
   killSwitch,
+  DEPARTMENTS_CATALOG,
 };
