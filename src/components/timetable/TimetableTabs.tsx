@@ -21,6 +21,10 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
+import { authService } from "@/services/authService";
+import { Badge } from "@/components/ui/badge";
+import { User, GraduationCap, Shield } from "lucide-react";
+
 interface TimetableTabsProps {
   timetable: Timetable;
   classes: Class[];
@@ -60,16 +64,63 @@ export const TimetableTabs: React.FC<TimetableTabsProps> = ({
   editMode,
   onUpdateLesson,
   onDeleteLesson,
-  onAddLesson
+  onAddLesson,
 }) => {
+  const currentUser = authService.getUser();
+  const isAdmin = currentUser?.role === "admin";
+  const isTeacher = currentUser?.role === "teacher";
+  const isStudent = currentUser?.role === "student";
+
+  const selectedTeacher = teachers.find((t) => t.id === selectedTeacherId);
+  const selectedClass = classes.find((c) => c.id === selectedClassId);
+
   return (
-    <Tabs defaultValue={activeView} onValueChange={(value) => setActiveView(value as TimetableViewType)}>
-      <TabsList className="mb-4">
-        <TabsTrigger value="master">Master Timetable</TabsTrigger>
-        <TabsTrigger value="teacher">Teacher Timetable</TabsTrigger>
-        <TabsTrigger value="class">Class Timetable</TabsTrigger>
-        {/* <TabsTrigger value="classroom">Classroom Timetable</TabsTrigger> */}
-      </TabsList>
+    <Tabs defaultValue={activeView} value={activeView} onValueChange={(value) => setActiveView(value as TimetableViewType)}>
+      {isAdmin ? (
+        <TabsList className="mb-4">
+          <TabsTrigger value="master">Master Timetable</TabsTrigger>
+          <TabsTrigger value="teacher">Teacher Timetable</TabsTrigger>
+          <TabsTrigger value="class">Class Timetable</TabsTrigger>
+        </TabsList>
+      ) : isTeacher ? (
+        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-200 dark:border-blue-900 rounded-lg flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-md bg-blue-500/20 text-blue-600 dark:text-blue-400">
+              <User className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-semibold text-sm text-foreground">
+                Personal Faculty Timetable: {selectedTeacher?.name || currentUser?.name}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {selectedTeacher?.specialization || "Faculty Schedule"} &bull; Max {selectedTeacher?.max_periods_per_day || 4} lessons/day
+              </div>
+            </div>
+          </div>
+          <Badge className="bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-300 text-xs">
+            Faculty View
+          </Badge>
+        </div>
+      ) : isStudent ? (
+        <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-200 dark:border-emerald-900 rounded-lg flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+              <GraduationCap className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-semibold text-sm text-foreground">
+                Class Schedule: {selectedClass?.name || currentUser?.name}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Student count: {selectedClass?.student_count || 60} &bull; Semester Timetable
+              </div>
+            </div>
+          </div>
+          <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-300 text-xs">
+            Class View
+          </Badge>
+        </div>
+      ) : null}
 
       <div className="mb-4">
         {activeView === "teacher" && (

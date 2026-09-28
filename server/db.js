@@ -75,6 +75,7 @@ try {
 }
 
 db.pragma("journal_mode = WAL");
+db.pragma("busy_timeout = 5000");
 db.pragma("foreign_keys = ON");
 
 // ---------------------------------------------------------------------------
@@ -211,6 +212,61 @@ CREATE TABLE IF NOT EXISTS timetable_drafts (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  salt TEXT NOT NULL,
+  role TEXT NOT NULL CHECK(role IN ('admin', 'teacher', 'student')),
+  teacher_id TEXT REFERENCES teachers(id) ON DELETE SET NULL,
+  class_id TEXT REFERENCES classes(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS change_requests (
+  id TEXT PRIMARY KEY,
+  timetable_id TEXT REFERENCES timetables(id) ON DELETE CASCADE,
+  lesson_id TEXT REFERENCES lessons(id) ON DELETE CASCADE,
+  teacher_id TEXT REFERENCES teachers(id) ON DELETE CASCADE,
+  class_id TEXT REFERENCES classes(id) ON DELETE CASCADE,
+  subject_id TEXT REFERENCES subjects(id) ON DELETE CASCADE,
+  current_day INTEGER NOT NULL,
+  current_time_slot_id TEXT REFERENCES time_slots(id),
+  current_classroom_id TEXT REFERENCES classrooms(id),
+  requested_day INTEGER,
+  requested_time_slot_id TEXT REFERENCES time_slots(id),
+  requested_classroom_id TEXT REFERENCES classrooms(id),
+  request_type TEXT NOT NULL CHECK(request_type IN ('time_change', 'room_change', 'reschedule')),
+  change_scope TEXT NOT NULL DEFAULT 'temporary' CHECK(change_scope IN ('temporary', 'permanent')),
+  effective_date TEXT,
+  reason TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected')),
+  admin_notes TEXT,
+  reviewed_by TEXT REFERENCES users(id),
+  reviewed_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS schedule_overrides (
+  id TEXT PRIMARY KEY,
+  timetable_id TEXT REFERENCES timetables(id) ON DELETE CASCADE,
+  lesson_id TEXT REFERENCES lessons(id) ON DELETE CASCADE,
+  change_request_id TEXT REFERENCES change_requests(id) ON DELETE SET NULL,
+  override_type TEXT NOT NULL CHECK(override_type IN ('temporary', 'permanent')),
+  effective_date TEXT,
+  day INTEGER NOT NULL,
+  time_slot_id TEXT REFERENCES time_slots(id),
+  classroom_id TEXT REFERENCES classrooms(id),
+  teacher_id TEXT REFERENCES teachers(id),
+  notes TEXT,
+  is_active INTEGER DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 `);
 
 // ---------------------------------------------------------------------------
@@ -231,6 +287,9 @@ const TABLES = {
   timetables: { boolCols: ["is_active", "is_locked"], jsonCols: [] },
   lessons: { boolCols: [], jsonCols: [] },
   timetable_drafts: { boolCols: [], jsonCols: ["draft_data"] },
+  users: { boolCols: [], jsonCols: [] },
+  change_requests: { boolCols: [], jsonCols: [] },
+  schedule_overrides: { boolCols: ["is_active"], jsonCols: [] },
 };
 
 // Attach the real column list for each table (used to validate filter/sort
@@ -251,6 +310,10 @@ function fromRow(table, row) {
   if (!row) return row;
   const meta = TABLES[table];
   const out = { ...row };
+  if (table === "users") {
+    delete out.password_hash;
+    delete out.salt;
+  }
   for (const col of meta.boolCols) {
     if (col in out) out[col] = !!out[col];
   }

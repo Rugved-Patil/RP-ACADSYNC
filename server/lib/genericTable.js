@@ -8,6 +8,19 @@
 
 const { randomUUID } = require("crypto");
 const { db, TABLES, isKnownTable, fromRow, toRow } = require("../db");
+const { verifyToken } = require("./auth");
+
+function getAuthUser(req) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    try {
+      return verifyToken(authHeader.slice(7).trim());
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 function parseOrder(orderParam, columns) {
   const entries = Array.isArray(orderParam) ? orderParam : [orderParam];
@@ -66,6 +79,17 @@ function registerGenericTableRoutes(app) {
 
     const meta = TABLES[table];
     const { eqFilters, inFilters } = parseFilters(req.query, meta.columns);
+
+    // Role-filtered timetable views (Scope Document Section 7.4)
+    const authUser = getAuthUser(req);
+    if (table === "lessons" && authUser) {
+      if (authUser.role === "teacher" && authUser.teacher_id) {
+        eqFilters.push({ col: "teacher_id", value: authUser.teacher_id });
+      } else if (authUser.role === "student" && authUser.class_id) {
+        eqFilters.push({ col: "class_id", value: authUser.class_id });
+      }
+    }
+
     const { sql: whereSql, params } = buildWhere(eqFilters, inFilters);
 
     let selectCols = "*";
@@ -95,6 +119,11 @@ function registerGenericTableRoutes(app) {
   app.post("/api/table/:table", (req, res) => {
     const { table } = req.params;
     if (!isKnownTable(table)) return res.status(404).json({ error: `Unknown table "${table}"` });
+
+    const authUser = getAuthUser(req);
+    if (authUser && authUser.role !== "admin") {
+      return res.status(403).json({ error: "Access denied. Only administrators can modify institution records." });
+    }
 
     const meta = TABLES[table];
     const items = Array.isArray(req.body) ? req.body : [req.body];
@@ -133,6 +162,11 @@ function registerGenericTableRoutes(app) {
     const { table } = req.params;
     if (!isKnownTable(table)) return res.status(404).json({ error: `Unknown table "${table}"` });
 
+    const authUser = getAuthUser(req);
+    if (authUser && authUser.role !== "admin") {
+      return res.status(403).json({ error: "Access denied. Only administrators can modify institution records." });
+    }
+
     const meta = TABLES[table];
     const { eqFilters, inFilters } = parseFilters(req.query, meta.columns);
     const { sql: whereSql, params: whereParams } = buildWhere(eqFilters, inFilters);
@@ -167,6 +201,11 @@ function registerGenericTableRoutes(app) {
   app.delete("/api/table/:table", (req, res) => {
     const { table } = req.params;
     if (!isKnownTable(table)) return res.status(404).json({ error: `Unknown table "${table}"` });
+
+    const authUser = getAuthUser(req);
+    if (authUser && authUser.role !== "admin") {
+      return res.status(403).json({ error: "Access denied. Only administrators can modify institution records." });
+    }
 
     const meta = TABLES[table];
     const { eqFilters, inFilters } = parseFilters(req.query, meta.columns);

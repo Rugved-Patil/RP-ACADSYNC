@@ -10,6 +10,7 @@
 const { randomUUID } = require("crypto");
 const { db } = require("./db");
 const { generateTimetable } = require("./lib/generator");
+const { createUser } = require("./lib/auth");
 
 function seed() {
   console.log("🌱 Seeding ACADSYNC database with realistic sample institution data...");
@@ -18,6 +19,9 @@ function seed() {
 
   // Clear existing tables in safe order
   const tables = [
+    "schedule_overrides",
+    "change_requests",
+    "users",
     "lessons",
     "timetables",
     "timetable_drafts",
@@ -226,10 +230,40 @@ function seed() {
     maxGenerations: 100,
   });
 
-  console.log(`✓ Timetable generated successfully! ID: ${generated.id}`);
-  console.log(`  - Lessons Scheduled: ${generated.lessonsScheduled}`);
-  console.log(`  - Hard Constraint Violations: ${generated.hardViolations}`);
-  console.log(`  - Fitness Score: ${generated.fitness}`);
+  // 11. User Accounts (v2.0.0 Section 7.1 & 7.2)
+  console.log("🔐 Provisioning user accounts for Admin, Teachers, and Students...");
+  // Admin Account
+  createUser({
+    name: "System Administrator",
+    email: "admin@acadsync.edu",
+    password: "admin123",
+    role: "admin",
+  });
+
+  // Teacher Accounts
+  teachers.forEach((t) => {
+    createUser({
+      name: t.name,
+      email: t.email,
+      password: "teacher123",
+      role: "teacher",
+      teacher_id: t.id,
+    });
+  });
+
+  // Student Accounts (one per class)
+  classes.forEach((c) => {
+    const classSlug = c.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    createUser({
+      name: `${c.name} Representative`,
+      email: `student.${classSlug}@acadsync.edu`,
+      password: "student123",
+      role: "student",
+      class_id: c.id,
+    });
+  });
+  console.log(`✓ Created 1 Admin, ${teachers.length} Teacher, and ${classes.length} Student accounts`);
+
   console.log("\n🎉 ACADSYNC database seeding complete. Start the app with `npm run dev`!");
 }
 

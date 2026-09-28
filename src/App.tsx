@@ -1,9 +1,8 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/layout/Layout";
@@ -17,11 +16,34 @@ import Timings from "./pages/Timings";
 import Share from "./pages/Share";
 import DataUpload from "./pages/DataUpload";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import ChangeRequests from "./pages/ChangeRequests";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { authService, UserRole } from "./services/authService";
 
 const queryClient = new QueryClient();
 
-// No login gate: this app runs entirely on your own machine, so it opens
-// straight to the dashboard as a single local admin user.
+// Helper to redirect logged-in users away from /login
+const LoginRoute: React.FC = () => {
+  if (authService.isAuthenticated()) {
+    const user = authService.getUser();
+    return <Navigate to={user?.role === "admin" ? "/" : "/timetables"} replace />;
+  }
+  return <Login />;
+};
+
+// Helper for protected routes with shell layout
+interface ProtectedShellProps {
+  children: React.ReactNode;
+  allowedRoles?: UserRole[];
+}
+
+const ProtectedShell: React.FC<ProtectedShellProps> = ({ children, allowedRoles }) => (
+  <ProtectedRoute allowedRoles={allowedRoles}>
+    <Layout>{children}</Layout>
+  </ProtectedRoute>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider
@@ -34,21 +56,105 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/classes" element={<Classes />} />
-              <Route path="/classrooms" element={<ClassroomsManagement />} />
-              <Route path="/timetables" element={<Timetables />} />
-              <Route path="/teachers" element={<Teachers />} />
-              <Route path="/subjects" element={<Subjects />} />
-              <Route path="/timings" element={<Timings />} />
-              <Route path="/share" element={<Share />} />
-              <Route path="/upload" element={<DataUpload />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+          <Routes>
+            {/* Public Auth Routes */}
+            <Route path="/login" element={<LoginRoute />} />
+            <Route path="/share" element={<Share />} />
+
+            {/* Admin-only Routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedShell allowedRoles={["admin"]}>
+                  <Dashboard />
+                </ProtectedShell>
+              }
+            />
+            <Route
+              path="/classes"
+              element={
+                <ProtectedShell allowedRoles={["admin"]}>
+                  <Classes />
+                </ProtectedShell>
+              }
+            />
+            <Route
+              path="/classrooms"
+              element={
+                <ProtectedShell allowedRoles={["admin"]}>
+                  <ClassroomsManagement />
+                </ProtectedShell>
+              }
+            />
+            <Route
+              path="/teachers"
+              element={
+                <ProtectedShell allowedRoles={["admin"]}>
+                  <Teachers />
+                </ProtectedShell>
+              }
+            />
+            <Route
+              path="/subjects"
+              element={
+                <ProtectedShell allowedRoles={["admin"]}>
+                  <Subjects />
+                </ProtectedShell>
+              }
+            />
+            <Route
+              path="/timings"
+              element={
+                <ProtectedShell allowedRoles={["admin"]}>
+                  <Timings />
+                </ProtectedShell>
+              }
+            />
+            <Route
+              path="/upload"
+              element={
+                <ProtectedShell allowedRoles={["admin"]}>
+                  <DataUpload />
+                </ProtectedShell>
+              }
+            />
+
+            {/* Multi-role Protected Routes (Admin, Teacher, Student) */}
+            <Route
+              path="/timetables"
+              element={
+                <ProtectedShell allowedRoles={["admin", "teacher", "student"]}>
+                  <Timetables />
+                </ProtectedShell>
+              }
+            />
+            <Route
+              path="/requests"
+              element={
+                <ProtectedShell allowedRoles={["admin", "teacher"]}>
+                  <ChangeRequests />
+                </ProtectedShell>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedShell allowedRoles={["admin", "teacher", "student"]}>
+                  <Settings />
+                </ProtectedShell>
+              }
+            />
+
+            {/* Catch-all */}
+            <Route
+              path="*"
+              element={
+                <ProtectedShell>
+                  <NotFound />
+                </ProtectedShell>
+              }
+            />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

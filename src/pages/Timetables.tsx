@@ -8,9 +8,16 @@ import { TimetableActions } from "@/components/timetable/TimetableActions";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { authService } from "@/services/authService";
+import { TeacherChangeRequestDialog } from "@/components/timetable/TeacherChangeRequestDialog";
 
 const Timetables = () => {
   const { toast } = useToast();
+  const currentUser = authService.getUser();
+  const isAdmin = currentUser?.role === "admin";
+  const isTeacher = currentUser?.role === "teacher";
+  const isStudent = currentUser?.role === "student";
+
   const [timetable, setTimetable] = React.useState<Timetable | null>(null);
   const [classes, setClasses] = React.useState<Class[]>([]);
   const [teachers, setTeachers] = React.useState<Teacher[]>([]);
@@ -18,11 +25,14 @@ const Timetables = () => {
   const [timeSlots, setTimeSlots] = React.useState<TimeSlot[]>([]);
   const [classrooms, setClassrooms] = React.useState<Classroom[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [activeView, setActiveView] = React.useState<TimetableViewType>("master");
+  const [activeView, setActiveView] = React.useState<TimetableViewType>(
+    isTeacher ? "teacher" : isStudent ? "class" : "master"
+  );
   const [selectedClassId, setSelectedClassId] = React.useState<string>("");
   const [selectedTeacherId, setSelectedTeacherId] = React.useState<string>("");
   const [selectedClassroomId, setSelectedClassroomId] = React.useState<string>("");
   const [editMode, setEditMode] = React.useState<EditMode>("none");
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = React.useState(false);
 
   // Fetch all required data
   const fetchData = React.useCallback(async () => {
@@ -45,9 +55,19 @@ const Timetables = () => {
       setTimeSlots(timeSlotsData);
       setClassrooms(classroomsData);
       
-      // Set default selections if available
-      if (classesData.length > 0) setSelectedClassId(classesData[0].id);
-      if (teachersData.length > 0) setSelectedTeacherId(teachersData[0].id);
+      // Set default selections based on logged-in role identity
+      if (isTeacher && currentUser?.teacher_id) {
+        setSelectedTeacherId(currentUser.teacher_id);
+      } else if (teachersData.length > 0) {
+        setSelectedTeacherId(teachersData[0].id);
+      }
+
+      if (isStudent && currentUser?.class_id) {
+        setSelectedClassId(currentUser.class_id);
+      } else if (classesData.length > 0) {
+        setSelectedClassId(classesData[0].id);
+      }
+
       if (classroomsData.length > 0) setSelectedClassroomId(classroomsData[0].id);
       
     } catch (error) {
@@ -349,12 +369,20 @@ const Timetables = () => {
     <div className="animate-fade-in">
       <PageHeader 
         title="Timetables" 
-        description="Generate and view timetables"
+        description={
+          isTeacher
+            ? "Your assigned academic timetable and schedule change requests."
+            : isStudent
+            ? "Your class weekly timetable and lesson details."
+            : "Generate, inspect, and manage master institutional timetables."
+        }
         actions={
-          <Button onClick={handleSaveChanges} disabled={!timetable}>
-            <Save className="mr-2 h-4 w-4" />
-            Save Changes
-          </Button>
+          isAdmin && (
+            <Button onClick={handleSaveChanges} disabled={!timetable}>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </Button>
+          )
         }
       />
 
@@ -370,6 +398,7 @@ const Timetables = () => {
           onLoadDraft={handleLoadDraft}
           isLocked={!!(timetable as any)?.is_locked}
           onToggleLock={handleToggleLock}
+          onRequestChange={() => setIsRequestDialogOpen(true)}
         />
       </div>
 
@@ -451,6 +480,19 @@ const Timetables = () => {
           onUpdateLesson={handleUpdateLesson}
           onDeleteLesson={handleDeleteLesson}
           onAddLesson={handleAddLesson}
+        />
+      )}
+
+      {timetable && (
+        <TeacherChangeRequestDialog
+          isOpen={isRequestDialogOpen}
+          onClose={() => setIsRequestDialogOpen(false)}
+          timetable={timetable}
+          classes={classes}
+          subjects={subjects}
+          classrooms={classrooms}
+          timeSlots={timeSlots}
+          onSuccess={fetchData}
         />
       )}
     </div>

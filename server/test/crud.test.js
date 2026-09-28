@@ -25,6 +25,9 @@ describe("CRUD & Database Persistence Tests", () => {
       "timetables",
       "lessons",
       "timetable_drafts",
+      "users",
+      "change_requests",
+      "schedule_overrides",
     ];
 
     for (const exp of expected) {

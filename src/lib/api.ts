@@ -15,6 +15,8 @@
 // Note: in dev, Vite proxies /api/* to the local Express server (see
 // vite.config.ts), so plain relative fetches work without any CORS setup.
 
+import { authService } from "../services/authService";
+
 const API_BASE = "/api";
 
 type Filter = { col: string; op: "eq" | "in"; value: any };
@@ -119,11 +121,16 @@ class QueryBuilder<T = any> implements PromiseLike<{ data: T | null; error: { me
 
     const url = path + this.buildQuery();
 
+    const token = authService.getToken();
+    const headers: Record<string, string> = {};
+    if (body) headers["Content-Type"] = "application/json";
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
     let res: Response;
     try {
       res = await fetch(url, {
         method,
-        headers: body ? { "Content-Type": "application/json" } : undefined,
+        headers: Object.keys(headers).length > 0 ? headers : undefined,
         body,
       });
     } catch (err: any) {
@@ -162,9 +169,13 @@ class QueryBuilder<T = any> implements PromiseLike<{ data: T | null; error: { me
 
 async function invokeFunction(name: string, opts: { body?: any } = {}) {
   try {
+    const token = authService.getToken();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
     const res = await fetch(`${API_BASE}/functions/${name}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(opts.body || {}),
     });
     if (!res.ok) {

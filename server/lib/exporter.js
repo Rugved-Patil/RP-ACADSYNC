@@ -10,13 +10,11 @@ const { db } = require("../db");
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-function getFullTimetable(timetableId) {
+function getFullTimetable(timetableId, filter = {}) {
   const timetable = db.prepare("SELECT * FROM timetables WHERE id = ?").get(timetableId);
   if (!timetable) return null;
 
-  const lessons = db
-    .prepare(
-      `SELECT
+  let sql = `SELECT
          lessons.*,
          classes.name AS class_name,
          subjects.name AS subject_name, subjects.code AS subject_code,
@@ -29,9 +27,19 @@ function getFullTimetable(timetableId) {
        LEFT JOIN teachers ON teachers.id = lessons.teacher_id
        LEFT JOIN classrooms ON classrooms.id = lessons.classroom_id
        LEFT JOIN time_slots ON time_slots.id = lessons.time_slot_id
-       WHERE lessons.timetable_id = ?`
-    )
-    .all(timetableId);
+       WHERE lessons.timetable_id = ?`;
+  const params = [timetableId];
+
+  if (filter.teacher_id) {
+    sql += " AND lessons.teacher_id = ?";
+    params.push(filter.teacher_id);
+  }
+  if (filter.class_id) {
+    sql += " AND lessons.class_id = ?";
+    params.push(filter.class_id);
+  }
+
+  const lessons = db.prepare(sql).all(...params);
 
   return { ...timetable, lessons };
 }
@@ -184,8 +192,8 @@ function toExcel(timetable, targetDayIndices) {
   return XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 }
 
-function exportTimetable(timetableId, format, dayParam) {
-  const timetable = getFullTimetable(timetableId);
+function exportTimetable(timetableId, format, dayParam, filter = {}) {
+  const timetable = getFullTimetable(timetableId, filter);
   if (!timetable) return null;
 
   const dayIndex = parseDayIndex(dayParam);
