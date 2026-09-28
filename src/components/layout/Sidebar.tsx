@@ -4,6 +4,12 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { authService, AuthUser, UserRole } from "@/services/authService";
 import { Badge } from "@/components/ui/badge";
+import { useSidebar } from "./SidebarContext";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Calendar,
   GraduationCap,
@@ -19,6 +25,8 @@ import {
   GitPullRequest,
   Shield,
   User as UserIcon,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 
 type NavItem = {
@@ -94,6 +102,7 @@ const allNavItems: NavItem[] = [
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isCollapsed, toggleCollapse } = useSidebar();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(authService.getUser());
 
@@ -138,7 +147,7 @@ const Sidebar: React.FC = () => {
     }
   };
 
-  const renderUserSection = () => (
+  const renderExpandedUserSection = () => (
     <div className="border-t border-border p-3 flex flex-col space-y-2 bg-muted/20">
       {currentUser && (
         <div className="flex items-center justify-between px-2 py-1.5">
@@ -180,6 +189,55 @@ const Sidebar: React.FC = () => {
         </Link>
         <ThemeToggle />
       </div>
+    </div>
+  );
+
+  const renderCollapsedUserSection = () => (
+    <div className="border-t border-border p-2 flex flex-col items-center space-y-3 bg-muted/20">
+      {currentUser && (
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs cursor-default">
+              {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p className="font-semibold text-xs">{currentUser.name}</p>
+            <p className="text-[11px] text-muted-foreground">{currentUser.email}</p>
+            <p className="text-[10px] capitalize text-primary mt-0.5 font-bold">{currentUser.role}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <Link
+            to="/settings"
+            className={cn(
+              "flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors",
+              location.pathname === "/settings" && "bg-accent text-accent-foreground font-semibold"
+            )}
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right">Settings</TooltipContent>
+      </Tooltip>
+      <ThemeToggle />
+      {currentUser && (
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              aria-label="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Sign Out</TooltipContent>
+        </Tooltip>
+      )}
     </div>
   );
 
@@ -262,45 +320,109 @@ const Sidebar: React.FC = () => {
             ))}
           </nav>
         </div>
-        {renderUserSection()}
+        {renderExpandedUserSection()}
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+      <div
+        className={cn(
+          "hidden md:flex md:flex-col md:fixed md:inset-y-0 transition-all duration-300 ease-in-out z-30",
+          isCollapsed ? "md:w-20" : "md:w-64"
+        )}
+      >
         <div className="flex-1 flex flex-col min-h-0 border-r border-border bg-card">
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center justify-between px-4 mb-6">
-              <span className="font-bold text-xl tracking-tight text-primary">ACADSYNC</span>
-              <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-                v2.0.0
-              </span>
-            </div>
-            <nav className="mt-2 flex-1 px-3 space-y-1">
-              {visibleNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "group flex items-center px-4 py-2.5 text-sm font-medium rounded-md transition-colors",
-                    location.pathname === item.href
-                      ? "bg-primary text-primary-foreground font-semibold shadow-sm"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  <item.icon
+            {isCollapsed ? (
+              <div className="flex flex-col items-center justify-center px-2 mb-6 space-y-2">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs tracking-tight">
+                  AS
+                </div>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={toggleCollapse}
+                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                      title="Expand sidebar"
+                      aria-label="Expand sidebar"
+                    >
+                      <PanelLeftOpen className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Expand sidebar</TooltipContent>
+                </Tooltip>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between px-4 mb-6">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-xl tracking-tight text-primary">ACADSYNC</span>
+                  <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
+                    v2.0.0
+                  </span>
+                </div>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={toggleCollapse}
+                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                      title="Collapse sidebar"
+                      aria-label="Collapse sidebar"
+                    >
+                      <PanelLeftClose className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Collapse sidebar</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+
+            <nav className={cn("mt-2 flex-1 space-y-1", isCollapsed ? "px-2" : "px-3")}>
+              {visibleNavItems.map((item) =>
+                isCollapsed ? (
+                  <Tooltip key={item.href} delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.href}
+                        className={cn(
+                          "flex items-center justify-center h-10 w-10 mx-auto rounded-md transition-colors",
+                          location.pathname === item.href
+                            ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                        aria-label={item.title}
+                      >
+                        <item.icon className="h-5 w-5" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="font-medium">
+                      {item.title}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Link
+                    key={item.href}
+                    to={item.href}
                     className={cn(
-                      "mr-3 h-4 w-4 transition-colors",
+                      "group flex items-center px-4 py-2.5 text-sm font-medium rounded-md transition-colors",
                       location.pathname === item.href
-                        ? "text-primary-foreground"
-                        : "text-muted-foreground group-hover:text-accent-foreground"
+                        ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     )}
-                  />
-                  {item.title}
-                </Link>
-              ))}
+                  >
+                    <item.icon
+                      className={cn(
+                        "mr-3 h-4 w-4 transition-colors",
+                        location.pathname === item.href
+                          ? "text-primary-foreground"
+                          : "text-muted-foreground group-hover:text-accent-foreground"
+                      )}
+                    />
+                    {item.title}
+                  </Link>
+                )
+              )}
             </nav>
           </div>
-          {renderUserSection()}
+          {isCollapsed ? renderCollapsedUserSection() : renderExpandedUserSection()}
         </div>
       </div>
     </>

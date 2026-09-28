@@ -1,9 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services/authService";
+import { adminService } from "@/services/adminService";
+import { cn } from "@/lib/utils";
 import { 
   Brain, 
   Clock, 
@@ -14,19 +29,91 @@ import {
   Building,
   Calendar,
   Lightbulb,
-  FileText
+  FileText,
+  Database,
+  Trash2,
+  PlusCircle,
+  AlertTriangle,
+  RefreshCw,
+  ShieldAlert,
+  Sparkles,
+  CheckCircle2
 } from "lucide-react";
 
 const Settings = () => {
+  const { toast } = useToast();
+  const currentUser = authService.getUser();
+  const isAdmin = currentUser?.role === "admin";
+
+  // Merge sample data modal state
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+  const [mergeConfirmed, setMergeConfirmed] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
+
+  // Kill switch modal state
+  const [killDialogOpen, setKillDialogOpen] = useState(false);
+  const [killInput, setKillInput] = useState("");
+  const [isKilling, setIsKilling] = useState(false);
+
+  const handleMergeSubmit = async () => {
+    if (!mergeConfirmed) return;
+    setIsMerging(true);
+    try {
+      const res = await adminService.mergeSampleData();
+      toast({
+        title: "Sample Data Merged",
+        description: res.message,
+      });
+      setMergeDialogOpen(false);
+      setMergeConfirmed(false);
+    } catch (err: any) {
+      toast({
+        title: "Merge Failed",
+        description: err.message || "Failed to merge sample data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
+  const handleKillSubmit = async () => {
+    if (killInput !== "DELETE ALL DATA") return;
+    setIsKilling(true);
+    try {
+      const res = await adminService.killSwitch("DELETE ALL DATA");
+      toast({
+        title: "All Data Deleted",
+        description: res.message,
+        variant: "destructive",
+      });
+      setKillDialogOpen(false);
+      setKillInput("");
+    } catch (err: any) {
+      toast({
+        title: "Kill Switch Failed",
+        description: err.message || "Failed to execute kill switch",
+        variant: "destructive",
+      });
+    } finally {
+      setIsKilling(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader 
-        title="Settings & Information" 
-        description="Learn about timetable generation algorithm, system guides and best practices"
+        title="Settings & Administration" 
+        description="Manage system database, view timetable algorithms, guides and best practices"
       />
       
-      <Tabs defaultValue="algorithm" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue={isAdmin ? "admin-data" : "algorithm"} className="w-full">
+        <TabsList className={cn("grid w-full", isAdmin ? "grid-cols-5" : "grid-cols-4")}>
+          {isAdmin && (
+            <TabsTrigger value="admin-data" className="font-semibold text-primary">
+              Data Management
+            </TabsTrigger>
+          )}
           <TabsTrigger value="algorithm">Algorithm</TabsTrigger>
           <TabsTrigger value="guides">User Guides</TabsTrigger>
           <TabsTrigger value="features">Features</TabsTrigger>
@@ -382,7 +469,285 @@ const Settings = () => {
             </Card>
           </div>
         </TabsContent>
+
+        {/* Admin Data Management Tab */}
+        {isAdmin && (
+          <TabsContent value="admin-data" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Card 1: Add More Default Data */}
+              <Card className="border-primary/20 shadow-sm flex flex-col justify-between">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-1">
+                    <Badge className="bg-primary/15 text-primary border-primary/30 text-xs">
+                      Safe Merge • Idempotent
+                    </Badge>
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </div>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <PlusCircle className="h-5 w-5 text-primary" />
+                    Add More Default Data
+                  </CardTitle>
+                  <CardDescription>
+                    Seamlessly merge additional sample academic records into your existing database without overwriting or deleting already available data.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Expands your institution with upper-year batches, specialized computer science courses, and modern lab infrastructure:
+                    </p>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span><strong>New Classes:</strong> Third Year (TE-CS-A/B) & Final Year (BE-CS-A/B)</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span><strong>Specialized Faculty:</strong> Dr. Sunita Rao (Cloud), Prof. Rohan Patil (AI) & more</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span><strong>Curriculum:</strong> Artificial Intelligence, Cloud Computing, Cyber Security</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span><strong>Infrastructure:</strong> AI & GPU Lab 3, Lecture Hall 301/302, Seminar Hall B</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span><strong>Accounts:</strong> Ready-to-use teacher and student representative logins</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Button
+                      onClick={() => {
+                        setMergeConfirmed(false);
+                        setMergeDialogOpen(true);
+                      }}
+                      className="w-full gap-2"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      Add More Default Data
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 2: Kill Switch */}
+              <Card className="border-destructive/30 shadow-sm flex flex-col justify-between">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-1">
+                    <Badge variant="destructive" className="bg-destructive/15 text-destructive border-destructive/30 text-xs">
+                      Emergency Reset • Destructive
+                    </Badge>
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                  </div>
+                  <CardTitle className="flex items-center gap-2 text-xl text-destructive">
+                    <Trash2 className="h-5 w-5 text-destructive" />
+                    Kill Switch (Delete All Data)
+                  </CardTitle>
+                  <CardDescription>
+                    Permanently delete all timetables, lessons, change requests, assignments, classes, teachers, subjects, timings, and classrooms.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="rounded-md border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive space-y-1">
+                      <p className="font-semibold flex items-center gap-1.5">
+                        <ShieldAlert className="h-4 w-4" />
+                        Irreversible Destruction
+                      </p>
+                      <p className="text-muted-foreground">
+                        Wipes all generated schedules and institutional tables. Your System Administrator login is safely preserved so you can configure or reseed from scratch.
+                      </p>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground">
+                      What will be wiped:
+                    </p>
+                    <ul className="space-y-1.5 text-sm text-muted-foreground">
+                      <li className="flex items-center gap-2">
+                        <span className="text-destructive font-mono text-xs">✕</span>
+                        All generated Master and Class Timetables & Drafts
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-destructive font-mono text-xs">✕</span>
+                        All Lessons, Schedule Overrides & Teacher Change Requests
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-destructive font-mono text-xs">✕</span>
+                        All Classes, Teachers, Subjects, Classrooms & Timing Slots
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-destructive font-mono text-xs">✕</span>
+                        All Teacher and Student login credentials
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setKillInput("");
+                        setKillDialogOpen(true);
+                      }}
+                      className="w-full gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Kill Switch (Delete All Data)
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
+
+      {/* Double Confirmation Modal: Merge Sample Data */}
+      <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Add More Default Data (Double Confirmation)
+            </DialogTitle>
+            <DialogDescription>
+              Step 1 of 2: Review the additions below and confirm you want to merge them into your institutional database.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Classes to add:</span>
+                <span className="font-semibold">TE-CS-A, TE-CS-B, BE-CS-A, BE-CS-B</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Faculty members:</span>
+                <span className="font-semibold">Dr. Sunita Rao, Prof. Rohan Patil & 2 others</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subjects & Labs:</span>
+                <span className="font-semibold">CS401, CS401L, CS402, CS402L, CS501, CS502</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Existing data impact:</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Zero data loss / No overwrites</span>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-2 pt-2 border-t">
+              <Checkbox
+                id="confirm-merge"
+                checked={mergeConfirmed}
+                onCheckedChange={(checked) => setMergeConfirmed(!!checked)}
+              />
+              <label
+                htmlFor="confirm-merge"
+                className="text-xs font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Step 2: I confirm that I want to merge these additional sample records into the database.
+              </label>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setMergeDialogOpen(false)}
+              disabled={isMerging}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleMergeSubmit}
+              disabled={!mergeConfirmed || isMerging}
+              className="gap-2"
+            >
+              {isMerging ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Merging...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Confirm & Merge Data
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Double Confirmation Modal: Kill Switch */}
+      <Dialog open={killDialogOpen} onOpenChange={setKillDialogOpen}>
+        <DialogContent className="max-w-md border-destructive/50">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="h-5 w-5 text-destructive" />
+              Kill Switch: Wipe All Data
+            </DialogTitle>
+            <DialogDescription>
+              Step 1 of 2: This action is permanent and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive space-y-1">
+              <p className="font-semibold">⚠️ All institutional data will be wiped immediately:</p>
+              <p>All timetables, lessons, change requests, assignments, classes, teachers, subjects, classrooms, and student logins will be permanently deleted.</p>
+              <p className="font-medium pt-1 text-foreground">Your System Administrator account will remain active.</p>
+            </div>
+
+            <div className="space-y-2 pt-1 border-t">
+              <label htmlFor="kill-input" className="text-xs font-medium text-foreground block">
+                Step 2: Type <span className="font-mono font-bold text-destructive">DELETE ALL DATA</span> below to unlock:
+              </label>
+              <Input
+                id="kill-input"
+                value={killInput}
+                onChange={(e) => setKillInput(e.target.value)}
+                placeholder="DELETE ALL DATA"
+                className="font-mono text-center tracking-wider"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setKillDialogOpen(false)}
+              disabled={isKilling}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleKillSubmit}
+              disabled={killInput !== "DELETE ALL DATA" || isKilling}
+              className="gap-2"
+            >
+              {isKilling ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Wiping Data...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Permanently Wipe All Data
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

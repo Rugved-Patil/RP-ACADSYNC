@@ -267,4 +267,8 @@ function seed() {
   console.log("\n🎉 ACADSYNC database seeding complete. Start the app with `npm run dev`!");
 }
 
-seed();
+if (require.main === module) {
+  seed();
+}
+
+module.exports = { seed };

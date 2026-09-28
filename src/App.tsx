@@ -59,9 +59,16 @@ const App = () => (
           <Routes>
             {/* Public Auth Routes */}
             <Route path="/login" element={<LoginRoute />} />
-            <Route path="/share" element={<Share />} />
 
             {/* Admin-only Routes */}
+            <Route
+              path="/share"
+              element={
+                <ProtectedShell allowedRoles={["admin"]}>
+                  <Share />
+                </ProtectedShell>
+              }
+            />
             <Route
               path="/"
               element={

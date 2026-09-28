@@ -28,6 +28,7 @@ const {
   promoteOverrideToPermanent,
   listEnrichedRequests,
 } = require("./lib/requests");
+const { mergeSampleData, killSwitch } = require("./lib/adminData");
 
 const app = express();
 app.use(cors());
@@ -71,6 +72,33 @@ app.get("/api/auth/users", requireAuth, requireRole("admin"), (req, res) => {
     const data = rows.map((r) => sanitizeUser(r));
     res.json({ data });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// -- Administration Data Management (Section 6.7 & Admin Tools) -------------
+app.post("/api/admin/merge-sample-data", requireAuth, requireRole("admin"), (req, res) => {
+  try {
+    const result = mergeSampleData();
+    res.json(result);
+  } catch (err) {
+    console.error("merge-sample-data failed:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/admin/kill-switch", requireAuth, requireRole("admin"), (req, res) => {
+  try {
+    const { confirmation } = req.body || {};
+    if (confirmation !== "DELETE ALL DATA") {
+      return res.status(400).json({
+        error: "Invalid confirmation string. Please type 'DELETE ALL DATA' to confirm.",
+      });
+    }
+    const result = killSwitch(req.user.id);
+    res.json(result);
+  } catch (err) {
+    console.error("kill-switch failed:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
