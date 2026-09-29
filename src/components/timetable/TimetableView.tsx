@@ -3,7 +3,7 @@ import { Class, Teacher, Subject, TimeSlot, Lesson, Timetable, EditMode, Classro
 import { cn } from "@/lib/utils";
 import { TimetableEditDialog } from "./TimetableEditDialog";
 import { ClassColorLegend, getClassColorMap } from "./ClassColorLegend";
-import { Edit, Plus, AlertTriangle, Lock, Calendar } from "lucide-react";
+import { Edit, Plus, AlertTriangle, Lock, Calendar, ArrowRightLeft, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TimetableViewProps {
@@ -52,6 +52,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
 
   const isLocked = !!(timetable as any)?.is_locked;
   const effectiveEditMode = isLocked ? "none" : editMode;
+  const [orientation, setOrientation] = useState<"days-sideways" | "time-sideways">("days-sideways");
 
   // Inputs presence guard
   const inputsReady =
@@ -74,6 +75,14 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
     () => (timeSlots ?? []).filter((s: any) => !!s?.isBreak || !!s?.is_break),
     [timeSlots]
   );
+
+  const orderedTimeSlots = useMemo(() => {
+    return [...(timeSlots ?? [])].sort((a: any, b: any) => {
+      const orderA = (a as any).slot_order ?? (a as any).slotOrder ?? 0;
+      const orderB = (b as any).slot_order ?? (b as any).slotOrder ?? 0;
+      return orderA - orderB;
+    });
+  }, [timeSlots]);
 
   // Lookup maps
   const classesById = useMemo(() => new Map((classes ?? []).map((c) => [c.id, c])), [classes]);
@@ -398,84 +407,190 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
 
       {view === "master" && <ClassColorLegend classes={classes ?? []} />}
 
-      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2 px-1">
-        <div className="flex items-center gap-1.5 font-medium">
-          <Calendar className="h-3.5 w-3.5 text-primary" />
-          <span>Timetable Layout: <strong>Days (Mon – Sat) Sideways</strong> &bull; <strong>Time Slots Vertical</strong></span>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground mb-3 px-1">
+        <div className="flex items-center gap-2 font-medium">
+          <Calendar className="h-4 w-4 text-primary" />
+          <span>
+            Layout:{" "}
+            <strong className="text-foreground">
+              {orientation === "days-sideways"
+                ? "Sideways: Days (Horizontal Rows) • Vertical: Time Slots (Columns)"
+                : "Vertical: Days (Columns) • Sideways: Time Slots (Rows)"}
+            </strong>
+          </span>
         </div>
-        <div className="hidden sm:block text-[11px] text-muted-foreground">
-          {teachingTimeSlots.length} Teaching Slots / Day
+        <div className="flex items-center gap-1.5 bg-muted/80 p-1 rounded-lg border border-border">
+          <Button
+            type="button"
+            size="sm"
+            variant={orientation === "days-sideways" ? "default" : "ghost"}
+            onClick={() => setOrientation("days-sideways")}
+            className="h-7 text-xs px-2.5 gap-1.5"
+          >
+            <ArrowRightLeft className="h-3 w-3" />
+            Sideways: Days • Vertical: Time Slots
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={orientation === "time-sideways" ? "default" : "ghost"}
+            onClick={() => setOrientation("time-sideways")}
+            className="h-7 text-xs px-2.5 gap-1.5"
+          >
+            <ArrowUpDown className="h-3 w-3" />
+            Vertical: Days • Sideways: Time Slots
+          </Button>
         </div>
       </div>
 
       <div className="bg-card rounded-md shadow overflow-auto">
-        <div className="min-w-[768px]">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/70 text-foreground w-36 font-semibold text-xs tracking-wider uppercase">
-                  Time Slot
-                </th>
-                {(daysOfWeek ?? []).map((day) => (
-                  <th
-                    key={day}
-                    className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/70 text-foreground font-semibold text-xs tracking-wider uppercase"
-                  >
-                    {day}
+        <div className="min-w-[860px]">
+          {orientation === "days-sideways" ? (
+            /* PRIMARY LAYOUT: Days Sideways (Horizontal Rows) • Time Slots Vertical (Columns) */
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/80 text-foreground w-36 font-semibold text-xs tracking-wider uppercase sticky left-0 z-10">
+                    Day / Period
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(teachingTimeSlots ?? []).map((timeSlot, slotIdx) => {
-                const nextBreak = (breakTimeSlots ?? []).find(
-                  (b) =>
-                    ((b as any)?.startTime && (b as any).startTime === (timeSlot as any)?.endTime) ||
-                    ((b as any)?.start_time && (b as any).start_time === (timeSlot as any)?.end_time)
-                );
-                return (
-                  <React.Fragment
-                    key={timeSlot?.id ?? `${(timeSlot as any)?.startTime}-${(timeSlot as any)?.endTime}`}
-                  >
-                    <tr>
-                      <td className="border border-gray-300 dark:border-gray-700 p-2 bg-muted/40 text-foreground w-36 text-xs font-medium">
-                        <div className="text-[11px] font-bold text-primary">Period {slotIdx + 1}</div>
-                        <div className="text-[11px] text-muted-foreground whitespace-nowrap">
-                          {formatTime((timeSlot as any)?.startTime ?? (timeSlot as any)?.start_time)} –{" "}
-                          {formatTime((timeSlot as any)?.endTime ?? (timeSlot as any)?.end_time)}
-                        </div>
-                      </td>
-                      {(daysOfWeek ?? []).map((_, dayIndex) => (
+                  {orderedTimeSlots.map((slot: any, idx: number) => {
+                    const isBreak = !!slot.isBreak || !!slot.is_break;
+                    const periodNum = orderedTimeSlots
+                      .slice(0, idx + 1)
+                      .filter((s: any) => !s.isBreak && !s.is_break).length;
+                    return (
+                      <th
+                        key={slot.id ?? idx}
+                        className={cn(
+                          "border border-gray-300 dark:border-gray-700 p-2 text-foreground font-semibold text-xs tracking-wider text-center",
+                          isBreak
+                            ? "bg-amber-100/50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 w-28"
+                            : "bg-muted/70 min-w-[140px]"
+                        )}
+                      >
+                        {isBreak ? (
+                          <div>
+                            <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400">☕ Recess</div>
+                            <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              {formatTime(slot.startTime ?? slot.start_time)} – {formatTime(slot.endTime ?? slot.end_time)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="text-[11px] font-bold text-primary">Period {periodNum}</div>
+                            <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              {formatTime(slot.startTime ?? slot.start_time)} – {formatTime(slot.endTime ?? slot.end_time)}
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {daysOfWeek.map((day, dayIndex) => (
+                  <tr key={day} className="hover:bg-muted/15 transition-colors">
+                    <td className="border border-gray-300 dark:border-gray-700 p-3 bg-muted/60 text-foreground w-36 font-bold text-xs sticky left-0 z-10 shadow-sm">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span>{day}</span>
+                      </div>
+                    </td>
+                    {orderedTimeSlots.map((slot: any, slotIdx: number) => {
+                      const isBreak = !!slot.isBreak || !!slot.is_break;
+                      if (isBreak) {
+                        return (
+                          <td
+                            key={`break-${slot.id ?? slotIdx}-${dayIndex}`}
+                            className="border border-gray-300 dark:border-gray-700 p-2 bg-amber-50/40 dark:bg-amber-950/20 text-center text-xs text-muted-foreground italic"
+                          >
+                            ☕ Recess
+                          </td>
+                        );
+                      }
+                      return (
                         <td
-                          key={`${timeSlot?.id}-${dayIndex}`}
-                          className="border border-gray-300 dark:border-gray-700 p-1 align-top"
+                          key={`${slot.id ?? slotIdx}-${dayIndex}`}
+                          className="border border-gray-300 dark:border-gray-700 p-1 align-top min-w-[140px]"
                         >
-                          {renderCell(dayIndex, timeSlot as TimeSlot)}
+                          {renderCell(dayIndex, slot as TimeSlot)}
                         </td>
-                      ))}
-                    </tr>
-                    {nextBreak && (
-                      <tr className="bg-muted/50 border-y border-dashed border-gray-300 dark:border-gray-700">
-                        <td className="border border-gray-300 dark:border-gray-700 p-2 text-xs font-semibold text-foreground whitespace-nowrap bg-muted/60">
-                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Break</span>
-                          <div className="text-[10px] text-muted-foreground">
-                            {formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} –{" "}
-                            {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)}
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            /* ALTERNATIVE LAYOUT: Time Slots as Rows • Days as Columns */
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/70 text-foreground w-36 font-semibold text-xs tracking-wider uppercase">
+                    Time Slot
+                  </th>
+                  {(daysOfWeek ?? []).map((day) => (
+                    <th
+                      key={day}
+                      className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/70 text-foreground font-semibold text-xs tracking-wider uppercase"
+                    >
+                      {day}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(teachingTimeSlots ?? []).map((timeSlot, slotIdx) => {
+                  const nextBreak = (breakTimeSlots ?? []).find(
+                    (b) =>
+                      ((b as any)?.startTime && (b as any).startTime === (timeSlot as any)?.endTime) ||
+                      ((b as any)?.start_time && (b as any).start_time === (timeSlot as any)?.end_time)
+                  );
+                  return (
+                    <React.Fragment
+                      key={timeSlot?.id ?? `${(timeSlot as any)?.startTime}-${(timeSlot as any)?.endTime}`}
+                    >
+                      <tr>
+                        <td className="border border-gray-300 dark:border-gray-700 p-2 bg-muted/40 text-foreground w-36 text-xs font-medium">
+                          <div className="text-[11px] font-bold text-primary">Period {slotIdx + 1}</div>
+                          <div className="text-[11px] text-muted-foreground whitespace-nowrap">
+                            {formatTime((timeSlot as any)?.startTime ?? (timeSlot as any)?.start_time)} –{" "}
+                            {formatTime((timeSlot as any)?.endTime ?? (timeSlot as any)?.end_time)}
                           </div>
                         </td>
-                        <td
-                          colSpan={daysOfWeek.length}
-                          className="border border-gray-300 dark:border-gray-700 p-2 text-center text-xs font-medium text-muted-foreground bg-muted/30 italic"
-                        >
-                          ☕ Recess / Institutional Break ({formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} – {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)})
-                        </td>
+                        {(daysOfWeek ?? []).map((_, dayIndex) => (
+                          <td
+                            key={`${timeSlot?.id}-${dayIndex}`}
+                            className="border border-gray-300 dark:border-gray-700 p-1 align-top"
+                          >
+                            {renderCell(dayIndex, timeSlot as TimeSlot)}
+                          </td>
+                        ))}
                       </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+                      {nextBreak && (
+                        <tr className="bg-muted/50 border-y border-dashed border-gray-300 dark:border-gray-700">
+                          <td className="border border-gray-300 dark:border-gray-700 p-2 text-xs font-semibold text-foreground whitespace-nowrap bg-muted/60">
+                            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Break</span>
+                            <div className="text-[10px] text-muted-foreground">
+                              {formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} –{" "}
+                              {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)}
+                            </div>
+                          </td>
+                          <td
+                            colSpan={daysOfWeek.length}
+                            className="border border-gray-300 dark:border-gray-700 p-2 text-center text-xs font-medium text-muted-foreground bg-muted/30 italic"
+                          >
+                            ☕ Recess / Institutional Break ({formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} – {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)})
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

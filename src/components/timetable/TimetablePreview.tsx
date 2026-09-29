@@ -150,31 +150,26 @@ export const TimetablePreview: React.FC<TimetablePreviewProps> = ({
 
   return (
     <div className="bg-card rounded-md border overflow-hidden">
-      <div className="text-xs">
+      <div className="text-xs overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="border border-border p-1 bg-muted/50 text-xs w-16">Time</th>
-              {daysOfWeek.map((day) => (
-                <th key={day} className="border border-border p-1 bg-muted/50 text-xs">
-                  {day}
+              <th className="border border-border p-1.5 bg-muted/70 text-xs w-20 text-left font-semibold">Day</th>
+              {compactTimeSlots.map((timeSlot) => (
+                <th key={timeSlot.id} className="border border-border p-1.5 bg-muted/70 text-xs text-center font-semibold">
+                  {timeSlot.startTime} - {timeSlot.endTime}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {compactTimeSlots.map((timeSlot) => (
-              <tr key={timeSlot.id}>
-                <td className="border border-border p-1 bg-muted/50 text-xs font-medium">
-                  <div className="text-xs">
-                    {timeSlot.startTime}
-                  </div>
-                  <div className="text-xs">
-                    {timeSlot.endTime}
-                  </div>
+            {daysOfWeek.map((day, dayIndex) => (
+              <tr key={day}>
+                <td className="border border-border p-1.5 bg-muted/40 text-xs font-semibold whitespace-nowrap">
+                  {day}
                 </td>
-                {daysOfWeek.map((_, dayIndex) => (
-                  <td key={`${timeSlot.id}-${dayIndex}`} className="border border-border">
+                {compactTimeSlots.map((timeSlot) => (
+                  <td key={`${timeSlot.id}-${dayIndex}`} className="border border-border p-0.5 align-top">
                     {renderCell(dayIndex, timeSlot)}
                   </td>
                 ))}

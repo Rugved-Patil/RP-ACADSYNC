@@ -112,23 +112,22 @@ function toHTML(timetable, targetDayIndices) {
   const timeSlots = getOrderedTimeSlots(timetable);
   const byDay = groupByDay(timetable.lessons);
 
-  // 1. Timetable Matrix Grid (Sideways = Days, Vertical = Time Slots)
+  // 1. Timetable Matrix Grid (Sideways = Days (Rows), Vertical = Time Slots (Columns))
   let gridTableHtml = `
     <table class="timetable-grid">
       <thead>
         <tr>
-          <th style="width: 130px;">Time Slot</th>
-          ${targetDayIndices.map((d) => `<th>${DAYS[d]}</th>`).join("")}
+          <th style="width: 130px;">Day</th>
+          ${timeSlots.map((s) => `<th>${s.start_time || s.slot_start} - ${s.end_time || s.slot_end}</th>`).join("")}
         </tr>
       </thead>
       <tbody>
   `;
 
-  for (const slot of timeSlots) {
-    const slotLabel = `${slot.start_time || slot.slot_start} - ${slot.end_time || slot.slot_end}`;
-    gridTableHtml += `<tr><td class="time-header"><strong>${slotLabel}</strong></td>`;
+  for (const dayIndex of targetDayIndices) {
+    gridTableHtml += `<tr><td class="time-header"><strong>${DAYS[dayIndex]}</strong></td>`;
 
-    for (const dayIndex of targetDayIndices) {
+    for (const slot of timeSlots) {
       const lessonsInSlot = (timetable.lessons || []).filter(
         (l) =>
           l.day === dayIndex &&
@@ -221,29 +220,33 @@ function toPDF(timetable, targetDayIndices) {
   doc.text(timetable.name, 14, 15);
   doc.setFontSize(10);
   doc.setFont(undefined, "normal");
-  doc.text(`Academic Year: ${timetable.academic_year || "2026-2027"} | Weekly Timetable Matrix (Days Horizontal / Time Slots Vertical)`, 14, 22);
+  doc.text(`Academic Year: ${timetable.academic_year || "2026-2027"} | Weekly Timetable Matrix (Days Sideways / Time Slots Vertical)`, 14, 22);
 
-  const colWidth = 38;
+  const dayColWidth = 26;
+  const numSlots = Math.max(1, timeSlots.length);
+  const slotColWidth = Math.min(38, Math.max(26, Math.floor((269 - dayColWidth) / numSlots)));
+  const totalTableWidth = dayColWidth + numSlots * slotColWidth;
   const startX = 14;
   let startY = 28;
 
-  // Header row (Days Horizontal / Sideways)
+  // Header row (Time Slots Vertical Columns across top)
   doc.setFillColor(79, 70, 229);
-  doc.rect(startX, startY, 32 + targetDayIndices.length * colWidth, 8, "F");
+  doc.rect(startX, startY, totalTableWidth, 8, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont(undefined, "bold");
-  doc.text("Time", startX + 3, startY + 5.5);
+  doc.setFontSize(8.5);
+  doc.text("Day", startX + 3, startY + 5.5);
 
-  targetDayIndices.forEach((d, idx) => {
-    doc.text(DAYS[d], startX + 32 + idx * colWidth + 3, startY + 5.5);
+  timeSlots.forEach((slot, idx) => {
+    const slotLabel = `${slot.start_time || slot.slot_start}-${slot.end_time || slot.slot_end}`;
+    doc.text(slotLabel, startX + dayColWidth + idx * slotColWidth + 1.5, startY + 5.5);
   });
 
   startY += 8;
   doc.setTextColor(0, 0, 0);
   doc.setFont(undefined, "normal");
 
-  for (const slot of timeSlots) {
-    const slotLabel = `${slot.start_time || slot.slot_start}-${slot.end_time || slot.slot_end}`;
+  for (const dayIndex of targetDayIndices) {
     const rowHeight = 22;
 
     if (startY + rowHeight > 195) {
@@ -251,16 +254,17 @@ function toPDF(timetable, targetDayIndices) {
       startY = 20;
     }
 
+    // Day Header cell
     doc.setFillColor(241, 245, 249);
-    doc.rect(startX, startY, 32, rowHeight, "F");
-    doc.rect(startX, startY, 32, rowHeight, "S");
-    doc.setFontSize(8);
+    doc.rect(startX, startY, dayColWidth, rowHeight, "F");
+    doc.rect(startX, startY, dayColWidth, rowHeight, "S");
+    doc.setFontSize(8.5);
     doc.setFont(undefined, "bold");
-    doc.text(slotLabel, startX + 2, startY + 11);
+    doc.text(DAYS[dayIndex], startX + 2, startY + 11);
 
-    targetDayIndices.forEach((dayIndex, idx) => {
-      const cellX = startX + 32 + idx * colWidth;
-      doc.rect(cellX, startY, colWidth, rowHeight, "S");
+    timeSlots.forEach((slot, idx) => {
+      const cellX = startX + dayColWidth + idx * slotColWidth;
+      doc.rect(cellX, startY, slotColWidth, rowHeight, "S");
 
       const lessonsInSlot = (timetable.lessons || []).filter(
         (l) =>
@@ -274,10 +278,10 @@ function toPDF(timetable, targetDayIndices) {
         const l = lessonsInSlot[0];
         doc.setFontSize(7.5);
         doc.setFont(undefined, "bold");
-        doc.text(`${l.subject_code}: ${l.subject_name.slice(0, 18)}`, cellX + 1.5, startY + 5);
+        doc.text(`${l.subject_code}: ${l.subject_name.slice(0, 16)}`, cellX + 1.5, startY + 5);
         doc.setFontSize(7);
         doc.setFont(undefined, "normal");
-        doc.text(`${l.class_name} | ${l.teacher_name.slice(0, 16)}`, cellX + 1.5, startY + 10);
+        doc.text(`${l.class_name} | ${l.teacher_name.slice(0, 14)}`, cellX + 1.5, startY + 10);
         doc.text(`Room: ${l.classroom_name || "TBA"}`, cellX + 1.5, startY + 14);
         if (lessonsInSlot.length > 1) {
           doc.text(`+${lessonsInSlot.length - 1} more`, cellX + 1.5, startY + 18);
@@ -285,7 +289,7 @@ function toPDF(timetable, targetDayIndices) {
       } else {
         doc.setFontSize(8);
         doc.setFont(undefined, "normal");
-        doc.text("—", cellX + colWidth / 2 - 2, startY + 11);
+        doc.text("—", cellX + slotColWidth / 2 - 2, startY + 11);
       }
     });
 
@@ -299,15 +303,14 @@ function toExcel(timetable, targetDayIndices) {
   const wb = XLSX.utils.book_new();
   const timeSlots = getOrderedTimeSlots(timetable);
 
-  // 1. PRIMARY SHEET: Weekly Timetable Grid (Days Horizontal across columns, Time Slots Vertical down rows)
-  const gridHeaders = ["Time Slot", ...targetDayIndices.map((d) => DAYS[d])];
+  // 1. PRIMARY SHEET: Weekly Timetable Grid (Days Sideways as Rows, Time Slots as Vertical Columns)
+  const slotLabels = timeSlots.map((s) => `${s.start_time || s.slot_start} - ${s.end_time || s.slot_end}`);
+  const gridHeaders = ["Day", ...slotLabels];
   const gridRows = [gridHeaders];
 
-  for (const slot of timeSlots) {
-    const slotLabel = `${slot.start_time || slot.slot_start} - ${slot.end_time || slot.slot_end}`;
-    const row = [slotLabel];
-
-    for (const dayIndex of targetDayIndices) {
+  for (const dayIndex of targetDayIndices) {
+    const row = [DAYS[dayIndex]];
+    for (const slot of timeSlots) {
       const lessonsInSlot = (timetable.lessons || []).filter(
         (l) =>
           l.day === dayIndex &&
@@ -334,11 +337,10 @@ function toExcel(timetable, targetDayIndices) {
   // 2. Individual Class Matrix Sheets
   const distinctClasses = [...new Set((timetable.lessons || []).map((l) => l.class_name).filter(Boolean))];
   for (const cName of distinctClasses.slice(0, 10)) {
-    const classRows = [["Time Slot", ...targetDayIndices.map((d) => DAYS[d])]];
-    for (const slot of timeSlots) {
-      const slotLabel = `${slot.start_time || slot.slot_start} - ${slot.end_time || slot.slot_end}`;
-      const row = [slotLabel];
-      for (const dayIndex of targetDayIndices) {
+    const classRows = [["Day", ...slotLabels]];
+    for (const dayIndex of targetDayIndices) {
+      const row = [DAYS[dayIndex]];
+      for (const slot of timeSlots) {
         const l = (timetable.lessons || []).find(
           (item) =>
             item.class_name === cName &&
