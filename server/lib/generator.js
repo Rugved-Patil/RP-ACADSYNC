@@ -569,6 +569,7 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
     for (let i = 0; i < lessonUnits.length; i++) {
       const unit = lessonUnits[i];
       const gene = genes[i];
+      if (!gene) continue;
       const day = gene.day;
       const teacherId = gene.teacher_id;
       const classId = unit.class_id;
@@ -661,9 +662,36 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
     return Array.from(conflicted);
   }
 
+  // Fast helper to find a valid room for a given day and slotIds
+  function findFreeRoom(day, slotIds, isLab, classId, genes, excludeIndex = -1) {
+    const candidateRooms = isLab
+      ? labRooms
+      : (classDefaultRoom.get(classId)
+          ? [classrooms.find((r) => r.id === classDefaultRoom.get(classId)), ...theoryRooms].filter(Boolean)
+          : theoryRooms);
+
+    // Collect occupied rooms during this day and slotIds
+    const occupied = new Set();
+    for (let j = 0; j < genes.length; j++) {
+      if (j === excludeIndex) continue;
+      const g = genes[j];
+      if (!g || g.day !== day || !g.classroom_id) continue;
+      for (const sid of slotIds) {
+        if (g.slotIds.includes(sid)) {
+          occupied.add(g.classroom_id);
+        }
+      }
+    }
+
+    for (const rm of candidateRooms) {
+      if (rm && !occupied.has(rm.id)) return rm;
+    }
+    return fallbackRooms[0] || candidateRooms[0] || null;
+  }
+
   // Generate candidate solutions and perform fast conflict-directed repair until 0 violations
   let bestSolution = null;
-  const maxAttempts = 8;
+  const maxAttempts = 6;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const candidateGenes = generateSmartChromosome();
@@ -672,7 +700,7 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
 
     if (curScore.hardViolations > 0) {
       repaired = candidateGenes.map((g) => ({ ...g, slotIds: [...g.slotIds] }));
-      for (let pass = 1; pass <= 4 && curScore.hardViolations > 0; pass++) {
+      for (let pass = 1; pass <= 3 && curScore.hardViolations > 0; pass++) {
         const conflictedIndices = findConflictedIndices(repaired);
         if (conflictedIndices.length === 0) break;
 
@@ -689,33 +717,24 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
 
           const eligibleTeachers =
             teachersBySubjectAndClass.get(`${unit.class_id}_${unit.subject_id}`) || teachers;
-          const candidateRooms = unit.is_lab
-            ? labRooms
-            : (classDefaultRoom.get(unit.class_id)
-                ? [classrooms.find((r) => r.id === classDefaultRoom.get(unit.class_id)), ...theoryRooms]
-                : theoryRooms);
 
           let bestLocalGene = { ...gene };
           let minLocalViolations = curScore.hardViolations;
 
-          for (const day of workingDays) {
+          searchLoop: for (const day of workingDays) {
             for (const slotIds of candidatePairs) {
               for (const t of eligibleTeachers) {
-                for (const rm of candidateRooms) {
-                  repaired[i] = { day, slotIds, teacher_id: t.id, classroom_id: rm?.id || null };
-                  const ev = evaluateFitness(repaired);
-                  if (ev.hardViolations < minLocalViolations) {
-                    minLocalViolations = ev.hardViolations;
-                    bestLocalGene = { day, slotIds, teacher_id: t.id, classroom_id: rm?.id || null };
-                    improved = true;
-                    if (minLocalViolations === 0) break;
-                  }
+                const rm = findFreeRoom(day, slotIds, unit.is_lab, unit.class_id, repaired, i);
+                repaired[i] = { day, slotIds, teacher_id: t.id, classroom_id: rm?.id || null };
+                const ev = evaluateFitness(repaired);
+                if (ev.hardViolations < minLocalViolations) {
+                  minLocalViolations = ev.hardViolations;
+                  bestLocalGene = { day, slotIds, teacher_id: t.id, classroom_id: rm?.id || null };
+                  improved = true;
+                  if (minLocalViolations === 0) break searchLoop;
                 }
-                if (minLocalViolations === 0) break;
               }
-              if (minLocalViolations === 0) break;
             }
-            if (minLocalViolations === 0) break;
           }
 
           repaired[i] = bestLocalGene;
