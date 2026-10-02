@@ -141,5 +141,15 @@ npm test
 
 ---
 
+## 📚 Project Documentation Hub
+
+Detailed institutional guides and architectural specifications are organized in the [`docs/`](./docs) folder:
+
+* 📄 [**System Architecture & Project Scope Document**](./docs/PROJECT_SCOPE.md): Complete specifications for the scheduling engine, data model, RBAC security, genetic algorithm constraints, and UI design tokens.
+* 📋 [**Institutional Dataset Specification**](./docs/COLLEGE_DATASET_SPEC.md): Full breakdown of classes, batches (A, B, C), lecture halls, specialized laboratories, faculty roster, and credit calculation rules.
+* 🔄 [**Project Handover & Migration Report**](./docs/HANDOVER_REPORT.md): Historical milestone records and current state transition overview.
+
+---
+
 ## 📄 License
 Academic and institutional use. Developed by Rugved Patil.
