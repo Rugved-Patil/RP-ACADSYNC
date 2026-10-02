@@ -28,7 +28,7 @@ const {
   promoteOverrideToPermanent,
   listEnrichedRequests,
 } = require("./lib/requests");
-const { mergeSampleData, killSwitch } = require("./lib/adminData");
+const { mergeSampleData, killSwitch, exportMasterData } = require("./lib/adminData");
 const { askChatbot } = require("./lib/chatbot");
 
 const app = express();
@@ -54,6 +54,22 @@ app.post("/api/chat", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// -- Administration Data Management (Section 6.7 & Admin Tools) -------------
+app.get("/api/admin/export-master-data", requireAuth, requireRole("admin"), (req, res) => {
+  try {
+    const csvContent = exportMasterData();
+    const filename = `acadsync_master_backup_${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(csvContent);
+  } catch (err) {
+    console.error("export-master-data failed:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/admin/merge-sample-data", requireAuth, requireRole("admin"), (req, res) => {
 
 // -- Auth Routes (v2.0.0 Section 7.1 & 7.2) --------------------------------
 app.post("/api/auth/login", (req, res) => {

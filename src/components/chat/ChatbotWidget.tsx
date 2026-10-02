@@ -17,6 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ChatMessage {
   id: string;
@@ -198,26 +203,29 @@ export const ChatbotWidget: React.FC = () => {
 
   return (
     <>
-      {/* Floating Widget Trigger Button */}
+      {/* Floating Widget Minimalist Circular Trigger Button */}
       <div className="fixed bottom-6 right-6 z-50">
         {!isOpen && (
-          <Button
-            onClick={() => setIsOpen(true)}
-            size="lg"
-            className="h-14 px-4 rounded-full shadow-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-primary hover:from-blue-700 hover:to-primary text-white flex items-center gap-2.5 transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20"
-          >
-            <div className="relative">
-              <Bot className="h-6 w-6" />
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
-            </div>
-            <div className="text-left hidden sm:block">
-              <div className="text-xs font-medium leading-none text-blue-100">Ask AI</div>
-              <div className="text-sm font-bold leading-tight">ACADSYNC Assistant</div>
-            </div>
-          </Button>
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setIsOpen(true)}
+                className="h-12 w-12 rounded-full shadow-xl bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border border-border/50 focus:outline-hidden focus:ring-2 focus:ring-ring"
+                aria-label="Open AI Assistant"
+              >
+                <div className="relative flex items-center justify-center">
+                  <Bot className="h-6 w-6" />
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                </div>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-xs font-semibold">
+              Ask ACADSYNC AI (Gemini 3.6 Flash)
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 

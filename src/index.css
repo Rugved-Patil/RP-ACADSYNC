@@ -3,101 +3,366 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+  /* 1. 🌾 Warm Linen & Olive (Default Light) */
+  :root,
+  [data-theme="linen-olive"] {
+    --paper: #E8DDC8;
+    --paper-card: #F5F0E5;
+    --canvas: #D8CBB3;
+    --ink: #303329;
+    --ink-muted: #596044;
+    --ink-sage: #7B8061;
+    --olive-deep: #596044;
+    --olive-sage: #7B8061;
+    --accent-color: #A4775C;
+    --ink-red: #A4775C;
+    --rule: #B9AC94;
+    --text-light: #F5F0E5;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --background: 40 37% 85%;
+    --foreground: 83 11% 18%;
+    --card: 41 47% 93%;
+    --card-foreground: 83 11% 18%;
+    --popover: 41 47% 93%;
+    --popover-foreground: 83 11% 18%;
+    --primary: 73 17% 32%;
+    --primary-foreground: 41 47% 93%;
+    --secondary: 69 14% 44%;
+    --secondary-foreground: 41 47% 93%;
+    --muted: 39 33% 77%;
+    --muted-foreground: 73 17% 32%;
+    --accent: 23 29% 50%;
+    --accent-foreground: 41 47% 93%;
+    --destructive: 23 29% 50%;
+    --destructive-foreground: 41 47% 93%;
+    --border: 39 21% 65%;
+    --input: 39 21% 65%;
+    --ring: 73 17% 32%;
     --radius: 0.5rem;
 
-    /* Brand colors for light mode */
-    --brand: 262 83% 58%;
-    --brand-foreground: 210 40% 98%;
-    --brand-muted: 262 83% 85%;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 40 37% 83%;
+    --sidebar-foreground: 83 11% 18%;
+    --sidebar-primary: 73 17% 32%;
+    --sidebar-primary-foreground: 41 47% 93%;
+    --sidebar-accent: 39 33% 77%;
+    --sidebar-accent-foreground: 83 11% 18%;
+    --sidebar-border: 39 21% 65%;
+    --sidebar-ring: 73 17% 32%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+  /* 2. 🌲 Cool Slate & Sage (Light) */
+  [data-theme="slate-sage"] {
+    --paper: #DFE5E0;
+    --paper-card: #F0F5F1;
+    --canvas: #CFD9D1;
+    --ink: #222E25;
+    --ink-muted: #486350;
+    --ink-sage: #6B8874;
+    --olive-deep: #486350;
+    --olive-sage: #6B8874;
+    --accent-color: #C07D3E;
+    --ink-red: #B56041;
+    --rule: #B5C4B8;
+    --text-light: #F0F5F1;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --background: 130 11% 89%;
+    --foreground: 135 15% 16%;
+    --card: 132 24% 95%;
+    --card-foreground: 135 15% 16%;
+    --popover: 132 24% 95%;
+    --popover-foreground: 135 15% 16%;
+    --primary: 137 16% 34%;
+    --primary-foreground: 132 24% 95%;
+    --secondary: 139 12% 48%;
+    --secondary-foreground: 132 24% 95%;
+    --muted: 132 12% 83%;
+    --muted-foreground: 137 16% 34%;
+    --accent: 29 52% 50%;
+    --accent-foreground: 132 24% 95%;
+    --destructive: 16 47% 48%;
+    --destructive-foreground: 132 24% 95%;
+    --border: 133 12% 74%;
+    --input: 133 12% 74%;
+    --ring: 137 16% 34%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --sidebar-background: 130 11% 86%;
+    --sidebar-foreground: 135 15% 16%;
+    --sidebar-primary: 137 16% 34%;
+    --sidebar-primary-foreground: 132 24% 95%;
+    --sidebar-accent: 132 12% 83%;
+    --sidebar-accent-foreground: 135 15% 16%;
+    --sidebar-border: 133 12% 74%;
+    --sidebar-ring: 137 16% 34%;
+  }
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+  /* 3. 🏜️ Terracotta & Dune (Light) */
+  [data-theme="terracotta-dune"] {
+    --paper: #EFE4D6;
+    --paper-card: #FAF5EE;
+    --canvas: #E2D2C0;
+    --ink: #382B24;
+    --ink-muted: #6B4E3D;
+    --ink-sage: #8C6A54;
+    --olive-deep: #8C4A32;
+    --olive-sage: #756D54;
+    --accent-color: #BA5D3F;
+    --ink-red: #B2462D;
+    --rule: #CEBCA8;
+    --text-light: #FAF5EE;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --background: 34 45% 89%;
+    --foreground: 21 22% 18%;
+    --card: 38 55% 96%;
+    --card-foreground: 21 22% 18%;
+    --popover: 38 55% 96%;
+    --popover-foreground: 21 22% 18%;
+    --primary: 16 47% 37%;
+    --primary-foreground: 38 55% 96%;
+    --secondary: 46 16% 39%;
+    --secondary-foreground: 38 55% 96%;
+    --muted: 31 35% 82%;
+    --muted-foreground: 23 27% 33%;
+    --accent: 15 49% 49%;
+    --accent-foreground: 38 55% 96%;
+    --destructive: 11 60% 44%;
+    --destructive-foreground: 38 55% 96%;
+    --border: 33 28% 73%;
+    --input: 33 28% 73%;
+    --ring: 16 47% 37%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --sidebar-background: 34 45% 86%;
+    --sidebar-foreground: 21 22% 18%;
+    --sidebar-primary: 16 47% 37%;
+    --sidebar-primary-foreground: 38 55% 96%;
+    --sidebar-accent: 31 35% 82%;
+    --sidebar-accent-foreground: 21 22% 18%;
+    --sidebar-border: 33 28% 73%;
+    --sidebar-ring: 16 47% 37%;
+  }
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+  /* 4. 🌌 Nocturne Olive (Dark Studio) */
+  [data-theme="nocturne-olive"] {
+    --paper: #1A1D17;
+    --paper-card: #242820;
+    --canvas: #2E3328;
+    --ink: #EAE3D2;
+    --ink-muted: #B8B09C;
+    --ink-sage: #98AB80;
+    --olive-deep: #8EA473;
+    --olive-sage: #6B7D57;
+    --accent-color: #D4956B;
+    --ink-red: #D47B62;
+    --rule: #3D4435;
+    --text-light: #1A1D17;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --background: 90 11% 10%;
+    --foreground: 42 36% 87%;
+    --card: 90 11% 14%;
+    --card-foreground: 42 36% 87%;
+    --popover: 90 11% 14%;
+    --popover-foreground: 42 36% 87%;
+    --primary: 87 22% 55%;
+    --primary-foreground: 90 11% 10%;
+    --secondary: 88 18% 41%;
+    --secondary-foreground: 42 36% 87%;
+    --muted: 89 12% 18%;
+    --muted-foreground: 43 16% 67%;
+    --accent: 24 55% 63%;
+    --accent-foreground: 90 11% 10%;
+    --destructive: 13 57% 61%;
+    --destructive-foreground: 90 11% 10%;
+    --border: 88 12% 24%;
+    --input: 88 12% 24%;
+    --ring: 87 22% 55%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 90 11% 8%;
+    --sidebar-foreground: 42 36% 87%;
+    --sidebar-primary: 87 22% 55%;
+    --sidebar-primary-foreground: 90 11% 10%;
+    --sidebar-accent: 89 12% 18%;
+    --sidebar-accent-foreground: 42 36% 87%;
+    --sidebar-border: 88 12% 24%;
+    --sidebar-ring: 87 22% 55%;
+  }
 
-    /* Brand colors for dark mode */
-    --brand: 262 80% 70%;
-    --brand-foreground: 222.2 84% 4.9%;
-    --brand-muted: 262 50% 60%;
+  /* 5. ☕ Espresso & Oat (Light) */
+  [data-theme="espresso-oat"] {
+    --paper: #E5DDD1;
+    --paper-card: #F6F1EA;
+    --canvas: #D5C8B8;
+    --ink: #2C1E16;
+    --ink-muted: #594233;
+    --ink-sage: #755B49;
+    --olive-deep: #4A3528;
+    --olive-sage: #7A5C47;
+    --accent-color: #9C6644;
+    --ink-red: #8B4513;
+    --rule: #BFAFA0;
+    --text-light: #F6F1EA;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 36 28% 86%;
+    --foreground: 21 33% 13%;
+    --card: 35 40% 94%;
+    --card-foreground: 21 33% 13%;
+    --popover: 35 40% 94%;
+    --popover-foreground: 21 33% 13%;
+    --primary: 23 30% 23%;
+    --primary-foreground: 35 40% 94%;
+    --secondary: 24 26% 38%;
+    --secondary-foreground: 35 40% 94%;
+    --muted: 34 26% 78%;
+    --muted-foreground: 24 27% 27%;
+    --accent: 23 39% 44%;
+    --accent-foreground: 35 40% 94%;
+    --destructive: 25 76% 31%;
+    --destructive-foreground: 35 40% 94%;
+    --border: 30 20% 69%;
+    --input: 30 20% 69%;
+    --ring: 23 30% 23%;
+
+    --sidebar-background: 36 28% 83%;
+    --sidebar-foreground: 21 33% 13%;
+    --sidebar-primary: 23 30% 23%;
+    --sidebar-primary-foreground: 35 40% 94%;
+    --sidebar-accent: 34 26% 78%;
+    --sidebar-accent-foreground: 21 33% 13%;
+    --sidebar-border: 30 20% 69%;
+    --sidebar-ring: 23 30% 23%;
+  }
+
+  /* 6. 👖 Indigo & Parchment (Light) */
+  [data-theme="indigo-parchment"] {
+    --paper: #E2E6EC;
+    --paper-card: #F2F5F9;
+    --canvas: #D0D7E2;
+    --ink: #1C293D;
+    --ink-muted: #3B5377;
+    --ink-sage: #587299;
+    --olive-deep: #2B4468;
+    --olive-sage: #4E688E;
+    --accent-color: #B86B35;
+    --ink-red: #A84E38;
+    --rule: #B8C3D2;
+    --text-light: #F2F5F9;
+
+    --background: 216 23% 91%;
+    --foreground: 217 37% 17%;
+    --card: 214 41% 96%;
+    --card-foreground: 217 37% 17%;
+    --popover: 214 41% 96%;
+    --popover-foreground: 217 37% 17%;
+    --primary: 215 41% 29%;
+    --primary-foreground: 214 41% 96%;
+    --secondary: 215 29% 43%;
+    --secondary-foreground: 214 41% 96%;
+    --muted: 218 25% 85%;
+    --muted-foreground: 216 34% 35%;
+    --accent: 25 56% 47%;
+    --accent-foreground: 214 41% 96%;
+    --destructive: 12 50% 44%;
+    --destructive-foreground: 214 41% 96%;
+    --border: 216 23% 77%;
+    --input: 216 23% 77%;
+    --ring: 215 41% 29%;
+
+    --sidebar-background: 216 23% 88%;
+    --sidebar-foreground: 217 37% 17%;
+    --sidebar-primary: 215 41% 29%;
+    --sidebar-primary-foreground: 214 41% 96%;
+    --sidebar-accent: 218 25% 85%;
+    --sidebar-accent-foreground: 217 37% 17%;
+    --sidebar-border: 216 23% 77%;
+    --sidebar-ring: 215 41% 29%;
+  }
+
+  /* 7. 🍷 Burgundy & Tweed (Light) */
+  [data-theme="burgundy-tweed"] {
+    --paper: #E9DFDF;
+    --paper-card: #F7F2F2;
+    --canvas: #DCCECE;
+    --ink: #33181C;
+    --ink-muted: #66333C;
+    --ink-sage: #85535C;
+    --olive-deep: #6E2E39;
+    --olive-sage: #8A4854;
+    --accent-color: #A85A48;
+    --ink-red: #8B2635;
+    --rule: #C6B4B6;
+    --text-light: #F7F2F2;
+
+    --background: 0 16% 90%;
+    --foreground: 351 36% 15%;
+    --card: 0 21% 96%;
+    --card-foreground: 351 36% 15%;
+    --popover: 0 21% 96%;
+    --popover-foreground: 351 36% 15%;
+    --primary: 350 41% 31%;
+    --primary-foreground: 0 21% 96%;
+    --secondary: 349 31% 41%;
+    --secondary-foreground: 0 21% 96%;
+    --muted: 0 14% 84%;
+    --muted-foreground: 349 33% 30%;
+    --accent: 11 40% 47%;
+    --accent-foreground: 0 21% 96%;
+    --destructive: 351 57% 35%;
+    --destructive-foreground: 0 21% 96%;
+    --border: 353 14% 74%;
+    --input: 353 14% 74%;
+    --ring: 350 41% 31%;
+
+    --sidebar-background: 0 16% 87%;
+    --sidebar-foreground: 351 36% 15%;
+    --sidebar-primary: 350 41% 31%;
+    --sidebar-primary-foreground: 0 21% 96%;
+    --sidebar-accent: 0 14% 84%;
+    --sidebar-accent-foreground: 351 36% 15%;
+    --sidebar-border: 353 14% 74%;
+    --sidebar-ring: 350 41% 31%;
+  }
+
+  /* 8. 🌲 Nordic Moss & Pine (Dark Studio) */
+  [data-theme="nordic-moss"] {
+    --paper: #161F1A;
+    --paper-card: #1F2C24;
+    --canvas: #2A3A31;
+    --ink: #E4EDE7;
+    --ink-muted: #A3B8AB;
+    --ink-sage: #819E8A;
+    --olive-deep: #76A786;
+    --olive-sage: #537A60;
+    --accent-color: #D99B52;
+    --ink-red: #D4715A;
+    --rule: #34483D;
+    --text-light: #161F1A;
+
+    --background: 147 18% 10%;
+    --foreground: 140 22% 91%;
+    --card: 143 17% 15%;
+    --card-foreground: 140 22% 91%;
+    --popover: 143 17% 15%;
+    --popover-foreground: 140 22% 91%;
+    --primary: 140 22% 56%;
+    --primary-foreground: 147 18% 10%;
+    --secondary: 141 19% 40%;
+    --secondary-foreground: 140 22% 91%;
+    --muted: 146 16% 20%;
+    --muted-foreground: 142 14% 68%;
+    --accent: 33 65% 59%;
+    --accent-foreground: 147 18% 10%;
+    --destructive: 11 59% 59%;
+    --destructive-foreground: 147 18% 10%;
+    --border: 147 16% 25%;
+    --input: 147 16% 25%;
+    --ring: 140 22% 56%;
+
+    --sidebar-background: 147 18% 8%;
+    --sidebar-foreground: 140 22% 91%;
+    --sidebar-primary: 140 22% 56%;
+    --sidebar-primary-foreground: 147 18% 10%;
+    --sidebar-accent: 146 16% 20%;
+    --sidebar-accent-foreground: 140 22% 91%;
+    --sidebar-border: 147 16% 25%;
+    --sidebar-ring: 140 22% 56%;
   }
 }
 

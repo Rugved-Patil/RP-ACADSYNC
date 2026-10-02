@@ -20,7 +20,9 @@ import Login from "./pages/Login";
 import ChangeRequests from "./pages/ChangeRequests";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { authService, UserRole } from "./services/authService";
+import { themeService } from "./services/themeService";
 import ChatbotWidget from "./components/chat/ChatbotWidget";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
@@ -45,14 +47,15 @@ const ProtectedShell: React.FC<ProtectedShellProps> = ({ children, allowedRoles 
   </ProtectedRoute>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
+const App = () => {
+  useEffect(() => {
+    // Initialize theme from storage
+    const current = themeService.getTheme();
+    themeService.setTheme(current);
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -166,8 +169,8 @@ const App = () => (
           <ChatbotWidget />
         </BrowserRouter>
       </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+};
 
 export default App;

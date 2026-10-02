@@ -728,7 +728,7 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
 
   // Generate candidate solutions and perform fast conflict-directed repair until 0 violations
   let bestSolution = null;
-  const maxAttempts = 15;
+  const maxAttempts = 25;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const candidateGenes = generateSmartChromosome();
@@ -782,7 +782,11 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
     }
 
     const solution = { genes: repaired, ...curScore };
-    if (!bestSolution || solution.fitness > bestSolution.fitness) {
+    if (
+      !bestSolution ||
+      solution.hardViolations < bestSolution.hardViolations ||
+      (solution.hardViolations === bestSolution.hardViolations && solution.fitness > bestSolution.fitness)
+    ) {
       bestSolution = solution;
     }
 

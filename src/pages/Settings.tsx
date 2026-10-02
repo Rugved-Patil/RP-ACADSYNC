@@ -1,12 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -18,32 +16,94 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/authService";
 import { adminService } from "@/services/adminService";
+import { themeService, THEMES, ThemeId } from "@/services/themeService";
 import { cn } from "@/lib/utils";
-import { 
-  Brain, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Users, 
-  BookOpen, 
-  Building,
-  Calendar,
-  Lightbulb,
-  FileText,
-  Database,
-  Trash2,
-  PlusCircle,
-  AlertTriangle,
-  RefreshCw,
+import {
+  Palette,
+  Download,
   ShieldAlert,
+  Trash2,
+  Check,
   Sparkles,
-  CheckCircle2
+  Database,
+  Building,
+  Users,
+  BookOpen,
+  Calendar,
+  Layers,
+  Cpu,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  Clock,
 } from "lucide-react";
 
 const Settings = () => {
   const { toast } = useToast();
   const currentUser = authService.getUser();
   const isAdmin = currentUser?.role === "admin";
+
+  // Theme State
+  const [activeTheme, setActiveTheme] = useState<ThemeId>(themeService.getTheme());
+
+  useEffect(() => {
+    const unsubscribe = themeService.subscribe((theme) => {
+      setActiveTheme(theme);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleThemeChange = (themeId: ThemeId) => {
+    themeService.setTheme(themeId);
+    setActiveTheme(themeId);
+    const themeDef = themeService.getThemeDefinition(themeId);
+    toast({
+      title: `${themeDef.emoji} Theme Updated`,
+      description: `Active theme switched to ${themeDef.name}.`,
+    });
+  };
+
+  // Master Data Export State
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportMasterData = async () => {
+    setIsExporting(true);
+    try {
+      const token = authService.getToken();
+      const res = await fetch("/api/admin/export-master-data", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to export institutional master data");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `acadsync_master_backup_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Master Backup Downloaded",
+        description: "Your full institutional dataset has been exported as an importable Master CSV.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Export Failed",
+        description: err.message || "Could not export master data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Kill switch modal state
   const [killDialogOpen, setKillDialogOpen] = useState(false);
@@ -74,511 +134,320 @@ const Settings = () => {
   };
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <PageHeader 
-        title="Settings & Administration" 
-        description="Manage system database, view timetable algorithms, guides and best practices"
+    <div className="animate-fade-in space-y-10 pb-16 max-w-6xl mx-auto">
+      {/* Page Header */}
+      <PageHeader
+        title="Settings & System Configuration"
+        description="Customize appearance with 8 artisan color themes, export full data backups, view algorithm rules, and manage database controls."
       />
-      
-      <Tabs defaultValue={isAdmin ? "admin-data" : "algorithm"} className="w-full">
-        <TabsList className={cn("grid w-full", isAdmin ? "grid-cols-5" : "grid-cols-4")}>
-          {isAdmin && (
-            <TabsTrigger value="admin-data" className="font-semibold text-primary">
-              Data Management
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="algorithm">Algorithm</TabsTrigger>
-          <TabsTrigger value="guides">User Guides</TabsTrigger>
-          <TabsTrigger value="features">Features</TabsTrigger>
-          <TabsTrigger value="best-practices">Best Practices</TabsTrigger>
-        </TabsList>
 
-        {/* Algorithm Tab */}
-        <TabsContent value="algorithm" className="space-y-6">
+      {/* SECTION 1: THEME & VISUAL STYLE */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Palette className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Theme & Visual Palette</h2>
+              <p className="text-sm text-muted-foreground">
+                Choose from 8 curated artisan color schemes designed for high readability and focus.
+              </p>
+            </div>
+          </div>
+          <Badge variant="outline" className="px-3 py-1 font-mono text-xs">
+            Current: {themeService.getThemeDefinition(activeTheme).name}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {THEMES.map((t) => {
+            const isSelected = activeTheme === t.id;
+            return (
+              <div
+                key={t.id}
+                onClick={() => handleThemeChange(t.id)}
+                className={cn(
+                  "group relative cursor-pointer rounded-xl border p-4 transition-all duration-200 hover:shadow-md flex flex-col justify-between",
+                  isSelected
+                    ? "border-primary ring-2 ring-primary/30 shadow-md bg-card"
+                    : "border-border/80 hover:border-primary/50 bg-card/60"
+                )}
+              >
+                {isSelected && (
+                  <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
+                    <Check className="h-3 w-3" />
+                  </div>
+                )}
+
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xl">{t.emoji}</span>
+                    <h3 className="font-semibold text-sm leading-tight text-foreground">{t.name}</h3>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[10px] px-1.5 py-0 mb-2 font-medium",
+                      t.type === "dark"
+                        ? "bg-stone-900 text-stone-200 border-stone-700"
+                        : "bg-stone-100 text-stone-700 border-stone-300"
+                    )}
+                  >
+                    {t.subtitle}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-4">
+                    {t.description}
+                  </p>
+                </div>
+
+                {/* Color Swatch Preview Bar */}
+                <div className="pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-1.5 h-6 rounded-md p-1 bg-muted/40 border border-border/40">
+                    <div
+                      className="flex-1 h-full rounded-xs shadow-xs"
+                      style={{ backgroundColor: t.previewColors.paper }}
+                      title="Page Background"
+                    />
+                    <div
+                      className="flex-1 h-full rounded-xs shadow-xs"
+                      style={{ backgroundColor: t.previewColors.card }}
+                      title="Card Surface"
+                    />
+                    <div
+                      className="flex-1 h-full rounded-xs shadow-xs"
+                      style={{ backgroundColor: t.previewColors.primary }}
+                      title="Primary Action"
+                    />
+                    <div
+                      className="flex-1 h-full rounded-xs shadow-xs"
+                      style={{ backgroundColor: t.previewColors.secondary }}
+                      title="Secondary"
+                    />
+                    <div
+                      className="flex-1 h-full rounded-xs shadow-xs"
+                      style={{ backgroundColor: t.previewColors.accent }}
+                      title="Accent"
+                    />
+                    <div
+                      className="flex-1 h-full rounded-xs shadow-xs"
+                      style={{ backgroundColor: t.previewColors.ink }}
+                      title="Primary Ink"
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* SECTION 2: MASTER DATA BACKUP & EXPORT */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
+            <Download className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">Master Institutional Data Backup</h2>
+            <p className="text-sm text-muted-foreground">
+              Download your complete institutional dataset as a standardized CSV that can be imported back at any time.
+            </p>
+          </div>
+        </div>
+
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Database className="h-4 w-4 text-primary" />
+              Full System CSV Backup (Re-importable)
+            </CardTitle>
+            <CardDescription>
+              Exports all Classes, Batches, Classrooms, Labs, Faculty members, Subjects (with Credits & Durations), and Relational Mappings.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 rounded-lg bg-muted/40 border text-xs text-muted-foreground space-y-2">
+              <div className="flex items-center gap-2 font-medium text-foreground">
+                <Info className="h-4 w-4 text-primary shrink-0" />
+                Zero-Loss Data Resilience Guarantee
+              </div>
+              <p>
+                If you ever wipe all data using the Emergency Kill Switch, you can simply upload this downloaded CSV file on the{" "}
+                <strong className="text-foreground font-semibold">Data Upload</strong> page. The system will recreate all classes, faculty, rooms, subjects, and batch assignments exactly as they were.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Button
+                onClick={handleExportMasterData}
+                disabled={isExporting}
+                className="gap-2 shadow-sm font-semibold"
+              >
+                <Download className="h-4 w-4" />
+                {isExporting ? "Generating Master Backup..." : "Export Full Institutional Data (CSV)"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <Separator />
+
+      {/* SECTION 3: ACADEMIC TIMETABLE ENGINE & POLICIES */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+            <Cpu className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">Scheduling Rules & Algorithm Reference</h2>
+            <p className="text-sm text-muted-foreground">
+              Rules and constraint models enforced by the ACADSYNC Genetic Algorithm generator.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Timetable Generation Algorithm
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <BookOpen className="h-4 w-4 text-primary" />
+                Theory & Credits Rule
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="font-semibold mb-3">Algorithm Overview</h3>
-                <p className="text-muted-foreground mb-4">
-                  Our timetable generation system uses an intelligent constraint-based algorithm that considers multiple factors to create optimal schedules while avoiding conflicts.
-                </p>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h3 className="font-semibold mb-3">Core Constraints & Rules</h3>
-                <div className="grid gap-4">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Subject Frequency Rule</p>
-                      <p className="text-sm text-muted-foreground">Each subject must be taught exactly 3 times per week for every year/class</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">No Back-to-Back Prevention</p>
-                      <p className="text-sm text-muted-foreground">Prevents consecutive lectures of the same subject by the same teacher for the same class</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Teacher Conflict Avoidance</p>
-                      <p className="text-sm text-muted-foreground">Ensures no teacher is assigned to multiple classes simultaneously</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Classroom Conflict Resolution</p>
-                      <p className="text-sm text-muted-foreground">Prevents double-booking of classrooms and matches lab subjects to lab rooms</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h3 className="font-semibold mb-3">Algorithm Steps</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">1</Badge>
-                    <span className="text-sm">Initialize timetable grid with time slots and working days</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">2</Badge>
-                    <span className="text-sm">Load subject-class and teacher-subject assignments</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">3</Badge>
-                    <span className="text-sm">Distribute subjects ensuring 3 periods per week per class</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">4</Badge>
-                    <span className="text-sm">Assign teachers based on their subject specializations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">5</Badge>
-                    <span className="text-sm">Allocate appropriate classrooms (labs for practicals)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">6</Badge>
-                    <span className="text-sm">Validate all constraints and resolve conflicts</span>
-                  </div>
-                </div>
-              </div>
+            <CardContent className="text-xs text-muted-foreground leading-relaxed">
+              1 Theory Credit = 1 one-hour lecture per week. The system distributes lectures across separate days to prevent student burnout. Back-to-back repeats of the same theory lecture are strictly prevented.
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* User Guides Tab */}
-        <TabsContent value="guides" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Getting Started
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">Step 1: Setup Basic Data</h4>
-                  <p className="text-sm text-muted-foreground">Add years, classes, teachers, subjects, and classrooms to the system.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Step 2: Configure Timings</h4>
-                  <p className="text-sm text-muted-foreground">Set up time slots, working days, and break periods.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Step 3: Create Assignments</h4>
-                  <p className="text-sm text-muted-foreground">Link subjects to classes and teachers to subjects.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Step 4: Generate Timetable</h4>
-                  <p className="text-sm text-muted-foreground">Use the automatic generation feature to create optimal schedules.</p>
-                </div>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <Layers className="h-4 w-4 text-primary" />
+                Institutional Batch Labs
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-muted-foreground leading-relaxed">
+              1 Practical Credit = 1 two-hour session per week per batch. Batches A, B, and C run in parallel across specialized laboratory rooms (e.g. Programming Lab, Analog Circuit Lab) without crossing lunch/tea breaks.
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Managing Subjects
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">Subject Types</h4>
-                  <p className="text-sm text-muted-foreground">Mark subjects as lab/practical to ensure proper classroom allocation.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Periods Per Week</h4>
-                  <p className="text-sm text-muted-foreground">Currently fixed at 3 periods per subject per class for optimal learning.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Subject Codes</h4>
-                  <p className="text-sm text-muted-foreground">Use unique codes for easy identification in timetables.</p>
-                </div>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <Clock className="h-4 w-4 text-primary" />
+                Standard Daily Timing
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-muted-foreground leading-relaxed">
+              Active schedule runs from <strong>10:00 to 17:00</strong> (6 teaching periods) with a 45-min Lunch Break (12:00–12:45) and a 15-min Tea Break (14:45–15:00) across Monday through Saturday.
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="h-5 w-5" />
-                  Classroom Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">Lab Classification</h4>
-                  <p className="text-sm text-muted-foreground">Mark rooms as labs to match them with practical subjects.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Capacity Planning</h4>
-                  <p className="text-sm text-muted-foreground">Set appropriate capacity for each classroom based on class sizes.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Equipment Tracking</h4>
-                  <p className="text-sm text-muted-foreground">Document available equipment for better resource allocation.</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Timetable Operations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">View Modes</h4>
-                  <p className="text-sm text-muted-foreground">Switch between Master, Teacher, Class, and Classroom views.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Manual Editing</h4>
-                  <p className="text-sm text-muted-foreground">Make manual adjustments while respecting system constraints.</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Sharing & Export</h4>
-                  <p className="text-sm text-muted-foreground">Share via WhatsApp, email, or download in multiple formats.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Features Tab */}
-        <TabsContent value="features" className="space-y-6">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>System Features</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">Core Features</h3>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Automated timetable generation
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Conflict detection and resolution
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Multiple view modes (Master, Teacher, Class)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Lab/practical subject handling
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Real-time timetable editing
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">Export & Sharing</h3>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        PDF export with formatting
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Excel/CSV data export
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        WhatsApp sharing integration
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Email distribution system
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        HTML format for web viewing
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Best Practices Tab */}
-        <TabsContent value="best-practices" className="space-y-6">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5" />
-                  Best Practices
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <h3 className="font-semibold mb-3">Data Preparation Tips</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <Badge variant="secondary" className="mt-0.5">Tip</Badge>
-                      <div>
-                        <p className="font-medium">Complete Data Entry First</p>
-                        <p className="text-sm text-muted-foreground">Ensure all teachers, subjects, classes, and classrooms are added before generating timetables.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Badge variant="secondary" className="mt-0.5">Tip</Badge>
-                      <div>
-                        <p className="font-medium">Verify Subject-Teacher Assignments</p>
-                        <p className="text-sm text-muted-foreground">Make sure every subject has at least one qualified teacher assigned.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Badge variant="secondary" className="mt-0.5">Tip</Badge>
-                      <div>
-                        <p className="font-medium">Plan Lab Requirements</p>
-                        <p className="text-sm text-muted-foreground">Mark subjects requiring labs and ensure sufficient lab classrooms are available.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className="font-semibold mb-3">Optimization Strategies</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-0.5">Strategy</Badge>
-                      <div>
-                        <p className="font-medium">Balance Teacher Workload</p>
-                        <p className="text-sm text-muted-foreground">Distribute subjects evenly among teachers to avoid overloading.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-0.5">Strategy</Badge>
-                      <div>
-                        <p className="font-medium">Optimize Break Times</p>
-                        <p className="text-sm text-muted-foreground">Schedule breaks strategically to maintain student and teacher efficiency.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-0.5">Strategy</Badge>
-                      <div>
-                        <p className="font-medium">Regular Review</p>
-                        <p className="text-sm text-muted-foreground">Periodically review and adjust timetables based on feedback and performance.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className="font-semibold mb-3">Common Issues & Solutions</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Generation Failures</p>
-                        <p className="text-sm text-muted-foreground">Usually caused by insufficient teachers or classroom conflicts. Verify assignments and availability.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Uneven Distribution</p>
-                        <p className="text-sm text-muted-foreground">Ensure adequate number of teachers per subject and balanced class sizes.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Admin Data Management Tab */}
-        {isAdmin && (
-          <TabsContent value="admin-data" className="space-y-6">
-            <div className="max-w-2xl">
-              {/* Kill Switch Card */}
-              <Card className="border-destructive/30 shadow-sm flex flex-col justify-between">
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-1">
-                    <Badge variant="destructive" className="bg-destructive/15 text-destructive border-destructive/30 text-xs">
-                      Emergency Reset • Destructive
-                    </Badge>
-                    <AlertTriangle className="h-4 w-4 text-destructive" />
-                  </div>
-                  <CardTitle className="flex items-center gap-2 text-xl text-destructive">
-                    <Trash2 className="h-5 w-5 text-destructive" />
-                    Kill Switch (Delete All Data)
-                  </CardTitle>
-                  <CardDescription>
-                    Permanently delete all timetables, lessons, change requests, assignments, classes, teachers, subjects, timings, and classrooms.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="rounded-md border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive space-y-1">
-                      <p className="font-semibold flex items-center gap-1.5">
-                        <ShieldAlert className="h-4 w-4" />
-                        Irreversible Destruction
-                      </p>
-                      <p className="text-muted-foreground">
-                        Wipes all generated schedules and institutional tables. Your System Administrator login is safely preserved so you can configure or reseed from scratch.
-                      </p>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground">
-                      What will be wiped:
-                    </p>
-                    <ul className="space-y-1.5 text-sm text-muted-foreground">
-                      <li className="flex items-center gap-2">
-                        <span className="text-destructive font-mono text-xs">✕</span>
-                        All generated Master and Class Timetables & Drafts
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-destructive font-mono text-xs">✕</span>
-                        All Lessons, Schedule Overrides & Teacher Change Requests
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-destructive font-mono text-xs">✕</span>
-                        All Classes, Teachers, Subjects, Classrooms & Timing Slots
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-destructive font-mono text-xs">✕</span>
-                        All Teacher and Student login credentials
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        setKillInput("");
-                        setKillDialogOpen(true);
-                      }}
-                      className="w-full gap-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Kill Switch (Delete All Data)
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+      {/* SECTION 4: DANGER ZONE / KILL SWITCH */}
+      {isAdmin && (
+        <>
+          <Separator />
+          <section className="space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-destructive/10 text-destructive">
+                <ShieldAlert className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-destructive">Danger Zone</h2>
+                <p className="text-sm text-muted-foreground">
+                  Irreversible administrative system actions and emergency database cleanup.
+                </p>
+              </div>
             </div>
-          </TabsContent>
-        )}
-      </Tabs>
 
-      {/* Double Confirmation Modal: Kill Switch */}
+            <Card className="border-destructive/30 bg-destructive/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold text-destructive flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Emergency Kill Switch (Delete All Institutional Data)
+                </CardTitle>
+                <CardDescription>
+                  Permanently deletes all timetables, scheduled lessons, classes, batches, subjects, classrooms, faculty, and teacher change requests.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-3 rounded-lg bg-background/80 border border-destructive/20 text-xs text-muted-foreground">
+                  <strong className="text-destructive font-semibold">Important Safety Note:</strong> Your current administrator account (<code className="font-mono text-foreground font-bold">{currentUser?.email}</code>) will be safely preserved so you will not be logged out.
+                </div>
+
+                <div>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setKillDialogOpen(true)}
+                    className="gap-2 font-semibold shadow-sm"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Trigger Emergency Kill Switch
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        </>
+      )}
+
+      {/* Double-Confirmation Kill Switch Modal */}
       <Dialog open={killDialogOpen} onOpenChange={setKillDialogOpen}>
-        <DialogContent className="max-w-md border-destructive/50">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <ShieldAlert className="h-5 w-5 text-destructive" />
-              Kill Switch: Wipe All Data
-            </DialogTitle>
-            <DialogDescription>
-              Step 1 of 2: This action is permanent and cannot be undone.
+            <div className="flex items-center gap-2 text-destructive mb-1">
+              <ShieldAlert className="h-6 w-6" />
+              <DialogTitle className="text-destructive font-bold text-lg">
+                Confirm Emergency Database Wipe
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              This action will permanently delete all timetables, classes, teachers, subjects, classrooms, and student records from the SQLite database.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive space-y-1">
-              <p className="font-semibold">⚠️ All institutional data will be wiped immediately:</p>
-              <p>All timetables, lessons, change requests, assignments, classes, teachers, subjects, classrooms, and student logins will be permanently deleted.</p>
-              <p className="font-medium pt-1 text-foreground">Your System Administrator account will remain active.</p>
-            </div>
-
-            <div className="space-y-2 pt-1 border-t">
-              <label htmlFor="kill-input" className="text-xs font-medium text-foreground block">
-                Step 2: Type <span className="font-mono font-bold text-destructive">DELETE ALL DATA</span> below to unlock:
-              </label>
-              <Input
-                id="kill-input"
-                value={killInput}
-                onChange={(e) => setKillInput(e.target.value)}
-                placeholder="DELETE ALL DATA"
-                className="font-mono text-center tracking-wider"
-                autoFocus
-              />
-            </div>
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-xs text-destructive space-y-1.5 font-medium">
+            <p>⚠️ All academic records will be permanently removed.</p>
+            <p>💡 Tip: You can download a Master CSV Backup above before deleting.</p>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <div className="space-y-2 pt-2">
+            <label className="text-xs font-semibold text-foreground">
+              Type <span className="font-mono text-destructive font-bold select-all">DELETE ALL DATA</span> to confirm:
+            </label>
+            <Input
+              value={killInput}
+              onChange={(e) => setKillInput(e.target.value)}
+              placeholder="DELETE ALL DATA"
+              className="font-mono text-sm border-destructive/40 focus-visible:ring-destructive"
+              autoFocus
+            />
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
             <Button
               variant="outline"
-              onClick={() => setKillDialogOpen(false)}
+              onClick={() => {
+                setKillDialogOpen(false);
+                setKillInput("");
+              }}
               disabled={isKilling}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={handleKillSubmit}
               disabled={killInput !== "DELETE ALL DATA" || isKilling}
-              className="gap-2"
+              onClick={handleKillSubmit}
+              className="font-semibold"
             >
-              {isKilling ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Wiping Data...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4" />
-                  Permanently Wipe All Data
-                </>
-              )}
+              {isKilling ? "Wiping Database..." : "Confirm & Delete Everything"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { authService, AuthUser, UserRole } from "@/services/authService";
 import { Badge } from "@/components/ui/badge";
 import { useSidebar } from "./SidebarContext";
@@ -180,14 +178,13 @@ const Sidebar: React.FC = () => {
         <Link
           to="/settings"
           className={cn(
-            "flex items-center px-2 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            "flex items-center px-2 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground w-full",
             location.pathname === "/settings" && "bg-accent text-accent-foreground font-semibold"
           )}
         >
           <Settings className="mr-2 h-4 w-4" />
-          Settings
+          Settings & Themes
         </Link>
-        <ThemeToggle />
       </div>
     </div>
   );
@@ -221,9 +218,8 @@ const Sidebar: React.FC = () => {
             <Settings className="h-4 w-4" />
           </Link>
         </TooltipTrigger>
-        <TooltipContent side="right">Settings</TooltipContent>
+        <TooltipContent side="right">Settings & Themes</TooltipContent>
       </Tooltip>
-      <ThemeToggle />
       {currentUser && (
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>

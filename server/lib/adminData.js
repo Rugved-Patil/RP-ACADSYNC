@@ -536,8 +536,82 @@ function killSwitch(currentAdminId) {
   })();
 }
 
+/**
+ * Export full institutional dataset into standardized college_master_import.csv format.
+ */
+function exportMasterData() {
+  const years = db.prepare("SELECT * FROM years").all();
+  const yearMap = new Map(years.map((y) => [y.id, y.name]));
+
+  const classes = db.prepare("SELECT * FROM classes ORDER BY name ASC").all();
+  const classrooms = db.prepare("SELECT * FROM classrooms ORDER BY name ASC").all();
+  const teachers = db.prepare("SELECT * FROM teachers ORDER BY name ASC").all();
+  const subjects = db.prepare("SELECT * FROM subjects ORDER BY name ASC").all();
+
+  const subjClassMap = db.prepare("SELECT * FROM subject_class_assignments").all();
+  const teacherSubjMap = db.prepare("SELECT * FROM teacher_subject_assignments").all();
+  const classMap = new Map(classes.map((c) => [c.id, c]));
+  const teacherMap = new Map(teachers.map((t) => [t.id, t]));
+
+  const rows = [];
+  rows.push("Record_Type,Name,Code,Year,Capacity,Credits,Periods_Per_Week,Is_Lab,Lab_Duration_Hours,Email,Specialization,Location,Equipment,Classes,Teachers,Batches");
+
+  function esc(val) {
+    if (val === null || val === undefined) return "";
+    const s = String(val);
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  }
+
+  // 1. Classes
+  for (const c of classes) {
+    let batchesStr = "";
+    if (c.batches) {
+      try {
+        const bParsed = typeof c.batches === "string" ? JSON.parse(c.batches) : c.batches;
+        if (Array.isArray(bParsed)) {
+          batchesStr = bParsed.map((b) => typeof b === "object" ? `${b.name || 'Batch'}: ${b.capacity || 20}` : b).join(", ");
+        }
+      } catch {}
+    }
+    rows.push(`CLASS,${esc(c.name)},,${esc(yearMap.get(c.year_id) || "")},${c.student_count || 60},,,No,1,,,,,,,${esc(batchesStr)}`);
+  }
+
+  // 2. Classrooms & Labs
+  for (const r of classrooms) {
+    const isLab = r.is_lab ? "Yes" : "No";
+    rows.push(`CLASSROOM,${esc(r.name)},,,${r.capacity || 60},,,${isLab},,,,${esc(r.location || "")},${esc(r.equipment || "")},,,`);
+  }
+
+  // 3. Teachers
+  for (const t of teachers) {
+    rows.push(`TEACHER,${esc(t.name)},,,,,,No,,${esc(t.email || "")},${esc(t.specialization || "")},,,,,`);
+  }
+
+  // 4. Subjects
+  for (const s of subjects) {
+    const assignedClassIds = subjClassMap.filter((sc) => sc.subject_id === s.id).map((sc) => sc.class_id);
+    const assignedClassNames = assignedClassIds.map((cid) => classMap.get(cid)?.name).filter(Boolean);
+
+    const assignedTeacherIds = teacherSubjMap.filter((ts) => ts.subject_id === s.id).map((ts) => ts.teacher_id);
+    const assignedTeacherNames = Array.from(new Set(assignedTeacherIds.map((tid) => teacherMap.get(tid)?.name).filter(Boolean)));
+
+    const isLab = s.is_lab ? "Yes" : "No";
+    const labDur = s.is_lab ? (s.lab_duration_hours || 2) : 1;
+    const credits = s.credits || (s.is_lab ? 1 : (s.periods_per_week || 3));
+    const periods = s.periods_per_week || (s.is_lab ? 2 : credits);
+
+    rows.push(`SUBJECT,${esc(s.name)},${esc(s.code || "")},,,${credits},${periods},${isLab},${labDur},,,,,${esc(assignedClassNames.join(", "))},${esc(assignedTeacherNames.join(", "))},`);
+  }
+
+  return rows.join("\n");
+}
+
 module.exports = {
   mergeSampleData,
   killSwitch,
+  exportMasterData,
   DEPARTMENTS_CATALOG,
 };
