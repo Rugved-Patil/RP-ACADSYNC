@@ -58,7 +58,7 @@ const Settings = () => {
     setActiveTheme(themeId);
     const themeDef = themeService.getThemeDefinition(themeId);
     toast({
-      title: `${themeDef.emoji} Theme Updated`,
+      title: "Theme Updated",
       description: `Active theme switched to ${themeDef.name}.`,
     });
   };
@@ -182,7 +182,6 @@ const Settings = () => {
 
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-xl">{t.emoji}</span>
                     <h3 className="font-semibold text-sm leading-tight text-foreground">{t.name}</h3>
                   </div>
                   <Badge

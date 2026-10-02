@@ -235,7 +235,15 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
 
   // Colors
   const classColorMap = useMemo(() => getClassColorMap(classes ?? []), [classes]);
-  const getClassColor = (cId: string) => classColorMap[cId]?.colorClass || "bg-muted border-border";
+  const getClassColorEntry = (cId: string) =>
+    classColorMap[cId] || {
+      colorClass: "bg-card border-border text-foreground",
+      titleClass: "text-foreground font-bold",
+      subClass: "text-foreground/90 font-medium",
+      metaClass: "text-muted-foreground",
+      dotClass: "bg-primary",
+      name: "Class",
+    };
 
   // Lookups
   const getClassName = (id: string) => classesById.get(id)?.name || "Unknown Class";
@@ -276,8 +284,8 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
   const renderCell = (day: number, timeSlot: TimeSlot) => {
     if (timeSlot?.isBreak || (timeSlot as any)?.is_break) {
       return (
-        <div className="h-full min-h-20 flex items-center justify-center bg-muted/50 text-muted-foreground text-xs font-medium">
-          Break
+        <div className="h-full min-h-20 flex items-center justify-center bg-muted/40 text-muted-foreground text-xs font-medium italic">
+          Recess
         </div>
       );
     }
@@ -312,15 +320,16 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
             {lessonsInThisSlot.map((lesson) => {
               const conflicts = conflictsMap.get(lesson.id) || [];
               const hasConflict = conflicts.length > 0;
+              const palette = getClassColorEntry(lesson.classId || lesson.class_id);
 
               return (
                 <div
                   key={lesson.id}
                   className={cn(
-                    "p-1.5 border rounded text-xs relative group transition-all",
+                    "p-2 border rounded-md text-xs relative group transition-all shadow-2xs",
                     hasConflict
-                      ? "border-red-500 bg-red-50/90 dark:bg-red-950/70 shadow-sm ring-2 ring-red-400/80"
-                      : getClassColor(lesson.classId || lesson.class_id)
+                      ? "border-red-500 bg-red-50/95 dark:bg-red-950/80 shadow-xs ring-2 ring-red-400/80"
+                      : palette.colorClass
                   )}
                   title={hasConflict ? `⚠️ SCHEDULING CONFLICT:\n• ${conflicts.join("\n• ")}` : undefined}
                 >
@@ -331,27 +340,27 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                     </div>
                   )}
 
-                  <div className="font-semibold text-foreground flex items-center justify-between gap-1">
+                  <div className={cn("flex items-center justify-between gap-1 leading-snug", palette.titleClass)}>
                     <span className="truncate">{getClassName(lesson.classId || lesson.class_id)}</span>
                     {lesson.batch && (
-                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-300/80 shrink-0">
+                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-200 text-indigo-950 dark:bg-indigo-900/90 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700 shrink-0">
                         {lesson.batch}
                       </span>
                     )}
                   </div>
-                  <div className="text-foreground/90">
-                    {getSubjectName(lesson.subjectId || lesson.subject_id)}
+                  <div className={cn("text-xs leading-tight mt-1 flex items-center flex-wrap gap-1", palette.subClass)}>
+                    <span>{getSubjectName(lesson.subjectId || lesson.subject_id)}</span>
                     {isSubjectLab(lesson.subjectId || lesson.subject_id) && (
-                      <span className="ml-1 px-1 py-0.5 bg-orange-100 text-orange-800 text-[10px] font-medium rounded">
+                      <span className="px-1.5 py-0.2 bg-amber-200 text-amber-950 dark:bg-amber-900/90 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-[10px] font-bold rounded">
                         Lab
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] text-muted-foreground">
+                  <div className={cn("text-[11px] mt-1 truncate", palette.metaClass)}>
                     {getTeacherName(lesson.teacherId || lesson.teacher_id)}
                   </div>
                   {(lesson.classroomId || lesson.classroom_id) && (
-                    <div className="text-[11px] text-muted-foreground font-medium">
+                    <div className={cn("text-[11px] font-medium truncate", palette.metaClass)}>
                       {getClassroomName(lesson.classroomId || lesson.classroom_id)}
                     </div>
                   )}
@@ -461,7 +470,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/80 text-foreground w-36 font-semibold text-xs tracking-wider uppercase sticky left-0 z-10">
+                  <th className="border border-border p-2.5 bg-muted/80 text-foreground w-36 font-semibold text-xs tracking-wider uppercase sticky left-0 z-10">
                     Day / Period
                   </th>
                   {orderedTimeSlots.map((slot: any, idx: number) => {
@@ -473,7 +482,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                       <th
                         key={slot.id ?? idx}
                         className={cn(
-                          "border border-gray-300 dark:border-gray-700 p-2 text-foreground font-semibold text-xs tracking-wider text-center",
+                          "border border-border p-2 text-foreground font-semibold text-xs tracking-wider text-center",
                           isBreak
                             ? "bg-amber-100/50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 w-28"
                             : "bg-muted/70 min-w-[140px]"
@@ -481,7 +490,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                       >
                         {isBreak ? (
                           <div>
-                            <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400">☕ Recess</div>
+                            <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Recess</div>
                             <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                               {formatTime(slot.startTime ?? slot.start_time)} – {formatTime(slot.endTime ?? slot.end_time)}
                             </div>
@@ -502,7 +511,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
               <tbody>
                 {daysOfWeek.map((day, dayIndex) => (
                   <tr key={day} className="hover:bg-muted/15 transition-colors">
-                    <td className="border border-gray-300 dark:border-gray-700 p-3 bg-muted/60 text-foreground w-36 font-bold text-xs sticky left-0 z-10 shadow-sm">
+                    <td className="border border-border p-3 bg-muted/60 text-foreground w-36 font-bold text-xs sticky left-0 z-10 shadow-xs">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
                         <span>{day}</span>
@@ -514,16 +523,16 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                         return (
                           <td
                             key={`break-${slot.id ?? slotIdx}-${dayIndex}`}
-                            className="border border-gray-300 dark:border-gray-700 p-2 bg-amber-50/40 dark:bg-amber-950/20 text-center text-xs text-muted-foreground italic"
+                            className="border border-border p-2 bg-amber-50/40 dark:bg-amber-950/20 text-center text-xs text-muted-foreground italic font-medium"
                           >
-                            ☕ Recess
+                            Recess
                           </td>
                         );
                       }
                       return (
                         <td
                           key={`${slot.id ?? slotIdx}-${dayIndex}`}
-                          className="border border-gray-300 dark:border-gray-700 p-1 align-top min-w-[140px]"
+                          className="border border-border p-1 align-top min-w-[140px]"
                         >
                           {renderCell(dayIndex, slot as TimeSlot)}
                         </td>
@@ -538,13 +547,13 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/70 text-foreground w-36 font-semibold text-xs tracking-wider uppercase">
+                  <th className="border border-border p-2.5 bg-muted/70 text-foreground w-36 font-semibold text-xs tracking-wider uppercase">
                     Time Slot
                   </th>
                   {(daysOfWeek ?? []).map((day) => (
                     <th
                       key={day}
-                      className="border border-gray-300 dark:border-gray-700 p-2.5 bg-muted/70 text-foreground font-semibold text-xs tracking-wider uppercase"
+                      className="border border-border p-2.5 bg-muted/70 text-foreground font-semibold text-xs tracking-wider uppercase"
                     >
                       {day}
                     </th>
@@ -563,7 +572,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                       key={timeSlot?.id ?? `${(timeSlot as any)?.startTime}-${(timeSlot as any)?.endTime}`}
                     >
                       <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 p-2 bg-muted/40 text-foreground w-36 text-xs font-medium">
+                        <td className="border border-border p-2 bg-muted/40 text-foreground w-36 text-xs font-medium">
                           <div className="text-[11px] font-bold text-primary">Period {slotIdx + 1}</div>
                           <div className="text-[11px] text-muted-foreground whitespace-nowrap">
                             {formatTime((timeSlot as any)?.startTime ?? (timeSlot as any)?.start_time)} –{" "}
@@ -573,15 +582,15 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                         {(daysOfWeek ?? []).map((_, dayIndex) => (
                           <td
                             key={`${timeSlot?.id}-${dayIndex}`}
-                            className="border border-gray-300 dark:border-gray-700 p-1 align-top"
+                            className="border border-border p-1 align-top"
                           >
                             {renderCell(dayIndex, timeSlot as TimeSlot)}
                           </td>
                         ))}
                       </tr>
                       {nextBreak && (
-                        <tr className="bg-muted/50 border-y border-dashed border-gray-300 dark:border-gray-700">
-                          <td className="border border-gray-300 dark:border-gray-700 p-2 text-xs font-semibold text-foreground whitespace-nowrap bg-muted/60">
+                        <tr className="bg-muted/50 border-y border-dashed border-border">
+                          <td className="border border-border p-2 text-xs font-semibold text-foreground whitespace-nowrap bg-muted/60">
                             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Break</span>
                             <div className="text-[10px] text-muted-foreground">
                               {formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} –{" "}
@@ -590,9 +599,9 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                           </td>
                           <td
                             colSpan={daysOfWeek.length}
-                            className="border border-gray-300 dark:border-gray-700 p-2 text-center text-xs font-medium text-muted-foreground bg-muted/30 italic"
+                            className="border border-border p-2 text-center text-xs font-medium text-muted-foreground bg-muted/30 italic"
                           >
-                            ☕ Recess / Institutional Break ({formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} – {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)})
+                            Recess / Institutional Break ({formatTime((nextBreak as any)?.startTime ?? (nextBreak as any)?.start_time)} – {formatTime((nextBreak as any)?.endTime ?? (nextBreak as any)?.end_time)})
                           </td>
                         </tr>
                       )}

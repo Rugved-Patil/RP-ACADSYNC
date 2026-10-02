@@ -11,7 +11,6 @@ export type ThemeId =
 export interface ThemeDefinition {
   id: ThemeId;
   name: string;
-  emoji: string;
   type: "light" | "dark";
   subtitle: string;
   description: string;
@@ -29,7 +28,6 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "linen-olive",
     name: "Warm Linen & Olive",
-    emoji: "🌾",
     type: "light",
     subtitle: "Default Signature Artisan",
     description: "Warm, tactile artisan linen with classic deep Mediterranean olive tones.",
@@ -45,7 +43,6 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "slate-sage",
     name: "Cool Slate & Sage",
-    emoji: "🌲",
     type: "light",
     subtitle: "Cool Editorial Botanic",
     description: "Cool misty parchment balanced with soothing Scandinavian pine and sage botanicals.",
@@ -61,7 +58,6 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "terracotta-dune",
     name: "Terracotta & Dune",
-    emoji: "🏜️",
     type: "light",
     subtitle: "Desert Warmth & Clay",
     description: "Sun-drenched desert clay, warm sand dunes, and rich earthenware ceramics.",
@@ -77,7 +73,6 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "nocturne-olive",
     name: "Nocturne Olive",
-    emoji: "🌌",
     type: "dark",
     subtitle: "Dark Studio Mode",
     description: "Deep obsidian charcoal canvas with glowing sage-olive highlights for late-night scheduling.",
@@ -93,7 +88,6 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "espresso-oat",
     name: "Espresso & Oat",
-    emoji: "☕",
     type: "light",
     subtitle: "Rich Roast Minimalist",
     description: "Cashmere oatmeal surfaces with rich dark roast coffee and toasted hazelnut undertones.",
@@ -109,7 +103,6 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "indigo-parchment",
     name: "Indigo & Parchment",
-    emoji: "👖",
     type: "light",
     subtitle: "Oxford Tailored Navy",
     description: "Crisp Oxford cloth paper, tailored chambray, and deep midnight navy blue.",
@@ -125,7 +118,6 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "burgundy-tweed",
     name: "Burgundy & Tweed",
-    emoji: "🍷",
     type: "light",
     subtitle: "Heritage Bordeaux Rose",
     description: "Heathered rose tweed texture with deep vintage Bordeaux wine and crimson wax seals.",
@@ -141,7 +133,6 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "nordic-moss",
     name: "Nordic Moss & Pine",
-    emoji: "🌲",
     type: "dark",
     subtitle: "Deep Twilight Forest",
     description: "Dense spruce twilight forest with vivid emerald moss and glowing amber highlights.",
