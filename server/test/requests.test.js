@@ -10,7 +10,7 @@ const {
   listEnrichedRequests,
 } = require("../lib/requests");
 
-describe("Teacher Change Requests & Schedule Overrides Tests (v2.0.0)", () => {
+describe("Teacher Change Requests & Schedule Overrides Tests", () => {
   // Retrieve sample seeded data
   const timetable = db.prepare("SELECT * FROM timetables WHERE is_active = 1 LIMIT 1").get()
     || db.prepare("SELECT * FROM timetables LIMIT 1").get();

@@ -1,19 +1,9 @@
-// api.ts — a small local replacement for the Supabase JS client.
+// api.ts — Local REST & Query Client for ACADSYNC.
 //
-// This app used to call `supabase.from('table').select().eq(...)...` against
-// a hosted Postgres database. Now everything is local: a small Express
-// server backed by SQLite (see /server). Rather than rewrite every call site
-// individually, this file re-implements just the slice of the supabase-js
-// query-builder API this app actually uses, backed by fetch() calls to our
-// own REST API (see server/lib/genericTable.js for the matching server
-// side). Existing code that did:
+// Backed by fetch() calls to the local Express API (see server/lib/genericTable.js).
+// Supports fluent query syntax: .from('table').select('*').eq('id', x)
 //
-//   const { data, error } = await supabase.from('teachers').select('*').eq('id', x).single();
-//
-// keeps working unchanged — only the import path changes.
-//
-// Note: in dev, Vite proxies /api/* to the local Express server (see
-// vite.config.ts), so plain relative fetches work without any CORS setup.
+// Note: In dev, Vite proxies /api/* to the local Express server on :4000.
 
 import { authService } from "../services/authService";
 
@@ -157,8 +147,8 @@ class QueryBuilder<T = any> implements PromiseLike<{ data: T | null; error: { me
     return { data, error: null };
   }
 
-  // Makes the builder awaitable, matching supabase-js's thenable behavior:
-  // `const { data, error } = await supabase.from(...).select()...`
+  // Makes the builder awaitable:
+  // `const { data, error } = await db.from(...).select()...`
   then<TResult1 = any, TResult2 = never>(
     onfulfilled?: ((value: { data: any; error: any }) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
@@ -189,7 +179,7 @@ async function invokeFunction(name: string, opts: { body?: any } = {}) {
   }
 }
 
-export const supabase = {
+export const db = {
   from(table: string) {
     return new QueryBuilder(table);
   },
@@ -197,3 +187,7 @@ export const supabase = {
     invoke: invokeFunction,
   },
 };
+
+export const apiClient = db;
+export const supabase = db;
+

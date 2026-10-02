@@ -1,7 +1,6 @@
-// authService.ts — Client-side authentication service for ACADSYNC v2.0.0
+// authService.ts — Client-side authentication service for ACADSYNC.
 //
 // Manages authentication state, session storage in localStorage, and role verification.
-// Implements Section 7.1 and 7.2 of the Scope Document.
 
 export type UserRole = "admin" | "teacher" | "student";
 

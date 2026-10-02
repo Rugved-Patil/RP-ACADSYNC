@@ -1,4 +1,4 @@
-// requestService.ts — Client service for teacher change requests & schedule overrides (v2.0.0)
+// requestService.ts — Client service for teacher change requests & schedule overrides.
 
 import { authService } from "./authService";
 

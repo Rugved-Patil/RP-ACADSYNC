@@ -1,6 +1,5 @@
-// auth.js — Authentication, password hashing, and role authorization for ACADSYNC v2.0.0.
+// auth.js — Authentication, password hashing, and role authorization for ACADSYNC.
 //
-// Implements Section 7.1 and 7.2 of the Scope Document:
 // 1. Password hashing via native node:crypto (scrypt + random salt).
 // 2. Self-contained signed session tokens (HMAC-SHA256).
 // 3. User creation and authentication against the local SQLite database.

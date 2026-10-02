@@ -116,7 +116,7 @@ const Login: React.FC = () => {
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight">ACADSYNC</h1>
           <p className="text-sm text-muted-foreground">
-            Academic Timetable Management System &bull; v2.0.0
+            Academic Timetable Management System
           </p>
         </div>
 

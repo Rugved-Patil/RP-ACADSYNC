@@ -1,11 +1,4 @@
-// importer.js — bulk CSV / Excel import, ported from
-// supabase/functions/import-data (Deno edge function).
-//
-// Behavior change vs. the original: PDF import has been dropped. It was a
-// best-effort text-scraping heuristic that rarely produced usable tables;
-// CSV and Excel cover the same ground far more reliably. If you need it
-// back, the old heuristic is still visible in supabase/functions/import-data
-// in git history.
+// importer.js — Bulk CSV / Excel import and Master Relational Ingestion engine for ACADSYNC.
 
 const { randomUUID } = require("crypto");
 const XLSX = require("xlsx");

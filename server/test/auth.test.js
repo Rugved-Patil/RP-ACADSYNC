@@ -15,7 +15,7 @@ const {
   requireRole,
 } = require("../lib/auth");
 
-describe("Authentication & Role Authorization Tests (v2.0.0)", () => {
+describe("Authentication & Role Authorization Tests", () => {
   const testEmail = `test.user.${Date.now()}@acadsync.edu`;
   const testPassword = "SecurePassword123!";
   let createdUserId = null;

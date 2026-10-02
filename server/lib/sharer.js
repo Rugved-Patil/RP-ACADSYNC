@@ -1,7 +1,4 @@
-// sharer.js — formats a timetable for WhatsApp / email sharing, ported from
-// supabase/functions/share-timetable. Nothing here talks to any external
-// service — it just builds text and a wa.me / mailto: link, which the
-// browser opens locally. That behavior carries over unchanged.
+// sharer.js — Formats a timetable for WhatsApp / email sharing. Builds text and wa.me / mailto: links.
 
 const { getFullTimetable } = require("./exporter");
 const { db } = require("../db");

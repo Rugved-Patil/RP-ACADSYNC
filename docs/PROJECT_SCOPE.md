@@ -1,6 +1,6 @@
 # RP-ACADSYNC — System Architecture & Project Scope Document
 
-**System Version**: V2.0.0  
+**System Version**: V1.0.0  
 **Project Lead**: Rugved Patil  
 **Target Environment**: Academic Institutions & Engineering Colleges (Pre-configured for JNEC MGM University)  
 **Database**: Local SQLite (WAL Mode, `better-sqlite3`)  

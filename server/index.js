@@ -69,7 +69,7 @@ app.get("/api/admin/export-master-data", requireAuth, requireRole("admin"), (req
   }
 });
 
-// -- Auth Routes (v2.0.0 Section 7.1 & 7.2) --------------------------------
+// -- Auth Routes -----------------------------------------------------------
 app.post("/api/auth/login", (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -136,7 +136,7 @@ app.post("/api/admin/kill-switch", requireAuth, requireRole("admin"), (req, res)
   }
 });
 
-// -- Teacher Change Requests & Schedule Overrides (v2.0.0 Section 7.3 & 7.5) -
+// -- Teacher Change Requests & Schedule Overrides ---------------------------
 app.post("/api/functions/calculate-free-slots", (req, res) => {
   try {
     const result = calculateFreeSlots(req.body || {});
@@ -204,7 +204,7 @@ app.post("/api/overrides/:id/promote", requireAuth, requireRole("admin"), (req, 
 // lessons, timetable_drafts). See server/lib/genericTable.js.
 registerGenericTableRoutes(app);
 
-// -- Functions (replace the old Supabase Edge Functions) --------------------
+// -- Core Action Endpoints -------------------------------------------------
 
 app.post("/api/functions/generate-timetable", (req, res) => {
   try {

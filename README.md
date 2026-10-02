@@ -1,8 +1,8 @@
 # RP-ACADSYNC — Academic Scheduling & Synchronization System
 
-**RP-ACADSYNC** is an automated, AI-assisted institutional timetable generator and academic synchronization platform built for engineering colleges and universities.
+**RP-ACADSYNC** (Version 1.0.0) is a standalone, automated, AI-assisted institutional timetable generator and academic synchronization platform built for engineering colleges and universities.
 
-It eliminates manual scheduling conflicts using a **Genetic Algorithm (GA) with Memetic Local Repair**, coordinates **Concurrent Multi-Batch Laboratories (Batch A/B/C)** in specialized rooms, supports **Role-Based Access Control (Admin, Faculty, Student)**, features an intelligent **Gemini 3.6 Flash AI Chatbot**, and provides **8 curated artisan color themes** for maximum focus and readability.
+It eliminates manual scheduling conflicts using a **Genetic Algorithm (GA) with Memetic Local Repair**, coordinates **Concurrent Multi-Batch Laboratories (Batch A/B/C)** in specialized rooms, supports **Role-Based Access Control (Admin, Faculty, Student)**, features an intelligent **Gemini 3.6 Flash AI Assistant**, and provides **8 curated artisan color themes** for maximum focus and readability.
 
 ---
 
@@ -30,13 +30,13 @@ It eliminates manual scheduling conflicts using a **Genetic Algorithm (GA) with 
 
 ### 3. 🤖 Intelligent Assistant (Gemini 3.6 Flash)
 * **Natural Language Help & Timetable Queries**: Ask questions about platform navigation or schedule data (e.g. *"Which lab does SE-AIDS have on Friday?"*, *"Where is Dr. S. N. Pawar at 11:00 on Monday?"*).
-* **Python Backend Engine**: Lightweight, fast Python assistant integration with dynamic SQLite context injection.
+* **Python Backend Engine**: Fast Python assistant integration with dynamic SQLite context injection.
 * **Minimalist UI**: Sleek, circular bottom-right floating trigger button (FAB) with instant expandable panel.
 
 ---
 
 ### 4. 🎨 8 Artisan Visual Themes
-Designed with custom HSL token architecture for eye-comfort and optimal contrast:
+Designed with custom HSL token architecture for eye-comfort and optimal contrast in both light and dark modes:
 1. **Warm Linen & Olive** *(Default Signature Artisan)*
 2. **Cool Slate & Sage** *(Cool Editorial Botanic)*
 3. **Terracotta & Dune** *(Desert Warmth & Clay)*
@@ -57,23 +57,41 @@ Designed with custom HSL token architecture for eye-comfort and optimal contrast
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## 🏗️ Architecture & Directory Structure
 
 ```
 RP-ACADSYNC/
-├── src/                          # React + TypeScript Frontend (Vite)
-│   ├── components/               # UI components (shadcn/ui, timetable grids, chat widget)
-│   ├── pages/                    # Dashboard, Timetables, Classes, Teachers, Subjects, Settings, Login
-│   ├── services/                 # Auth, Theme, Timetable, Admin API clients
-│   └── index.css                 # CSS token palettes for all 8 artisan themes
-├── server/                       # Node.js + Express API Backend
-│   ├── db.js                     # SQLite schema & database migrations (better-sqlite3)
-│   ├── index.js                  # Express API routes
-│   ├── chatbot/assistant.py      # Python Gemini AI Assistant
-│   ├── lib/                      # Auth, Generator, Importer, Exporter, Requests, AdminData
-│   ├── test/                     # Node.js native test suite (39 tests)
-│   └── data/acadsync.db          # Self-contained SQLite database (WAL mode)
-└── public/                       # Favicons, robots.txt, master import template
+├── README.md                      # Primary project overview & quickstart guide
+├── index.html                     # Clean entry point with calendar favicon
+│
+├── docs/                          # 📖 Centralized Institutional Documentation Hub
+│   ├── PROJECT_SCOPE.md           # Full System Architecture & Scope Document
+│   ├── COLLEGE_DATASET_SPEC.md    # JNEC MGM University dataset breakdown & credit rules
+│   └── HANDOVER_REPORT.md         # Milestone transition & technical status record
+│
+├── college_import_data/           # 📦 Production Master Import Datasets
+│   ├── college_master_import.csv  # 1-Click Master Relational CSV (Classes, Batches, Rooms, Faculty, Subjects)
+│   ├── 1_classes.csv              # Modular class breakdown
+│   ├── 2_classrooms_and_labs.csv  # Modular room breakdown
+│   ├── 3_teachers.csv             # Modular faculty breakdown
+│   ├── 4_subjects_and_labs.csv    # Modular course & lab breakdown
+│   └── README.md                  # Dataset notes
+│
+├── src/                           # 💻 React 18 + TypeScript + Tailwind Frontend
+│   ├── components/                # Modular UI widgets (timetable grids, dialogs, chat FAB)
+│   ├── pages/                     # Dashboard, Timetables, Classes, Teachers, Subjects, Settings, Login
+│   ├── services/                  # API clients (Auth, Themes, Timetable, Admin)
+│   └── index.css                  # Custom token palettes for all 8 artisan themes
+│
+├── server/                        # ⚡ Node.js + Express API Backend
+│   ├── db.js                      # SQLite database layer (better-sqlite3)
+│   ├── index.js                   # API routes
+│   ├── chatbot/assistant.py       # Python Gemini 3.6 Flash assistant sidecar
+│   ├── lib/                       # Generator (GA), Importer, Exporter, Auth, AdminData
+│   ├── test/                      # 39 automated unit & integration test suites
+│   └── data/acadsync.db           # Self-contained SQLite database file (WAL mode)
+│
+└── public/                        # 🌐 Static Assets (favicon.svg, college_master_import.csv)
 ```
 
 ---
@@ -147,7 +165,7 @@ Detailed institutional guides and architectural specifications are organized in 
 
 * 📄 [**System Architecture & Project Scope Document**](./docs/PROJECT_SCOPE.md): Complete specifications for the scheduling engine, data model, RBAC security, genetic algorithm constraints, and UI design tokens.
 * 📋 [**Institutional Dataset Specification**](./docs/COLLEGE_DATASET_SPEC.md): Full breakdown of classes, batches (A, B, C), lecture halls, specialized laboratories, faculty roster, and credit calculation rules.
-* 🔄 [**Project Handover & Migration Report**](./docs/HANDOVER_REPORT.md): Historical milestone records and current state transition overview.
+* 🔄 [**Project Handover & Milestone Report**](./docs/HANDOVER_REPORT.md): Historical milestone records and technical overview.
 
 ---
 

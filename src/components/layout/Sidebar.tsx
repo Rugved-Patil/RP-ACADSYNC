@@ -352,9 +352,6 @@ const Sidebar: React.FC = () => {
               <div className="flex items-center justify-between px-4 mb-6">
                 <div className="flex items-center space-x-2">
                   <span className="font-bold text-xl tracking-tight text-primary">ACADSYNC</span>
-                  <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-                    v2.0.0
-                  </span>
                 </div>
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>

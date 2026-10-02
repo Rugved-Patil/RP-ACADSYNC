@@ -1,7 +1,7 @@
 # RP-ACADSYNC — Project Handover & Transition Report
 
 **Project Name**: RP-ACADSYNC (Academic Scheduling & Synchronization System)  
-**Version**: V2.0.0 (Production-Ready Local SQLite + React + RBAC + AI Assistant + 8 Artisan Themes)  
+**Version**: V1.0.0 (Production-Ready Local SQLite + React + RBAC + AI Assistant + 8 Artisan Themes)  
 **GitHub Repository**: [`https://github.com/Rugved-Patil/RP-ACADSYNC.git`](https://github.com/Rugved-Patil/RP-ACADSYNC.git)  
 **Current Branch**: `main`  
 **Date & Timestamp**: October 2, 2026  

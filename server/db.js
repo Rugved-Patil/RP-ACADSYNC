@@ -1,8 +1,7 @@
-// db.js — local SQLite database setup for ACADSYNC.
+// db.js — Local SQLite database setup for ACADSYNC.
 //
-// This replaces the old Supabase/Postgres backend. Everything lives in a
-// single file on disk at server/data/acadsync.db, so the whole database is
-// just that one file — copy it to back it up, delete it to start fresh.
+// Persistent SQLite storage at server/data/acadsync.db with WAL mode
+// and foreign key constraints enabled.
 
 const path = require("path");
 const fs = require("fs");

@@ -1,10 +1,4 @@
-// genericTable.js — a small, generic REST layer over any whitelisted SQLite
-// table (list / insert / update-by-filter / delete-by-filter).
-//
-// This exists so the React frontend can keep using the same simple
-// "select / eq / order / limit / insert / update / delete" query patterns it
-// used with Supabase, just pointed at our own local API instead
-// (see src/lib/api.ts on the frontend for the matching client-side shim).
+// genericTable.js — Generic REST API layer over SQLite tables (list / insert / update / delete).
 
 const { randomUUID } = require("crypto");
 const { db, TABLES, isKnownTable, fromRow, toRow } = require("../db");

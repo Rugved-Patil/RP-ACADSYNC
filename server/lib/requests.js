@@ -1,6 +1,4 @@
-// requests.js — Teacher change-request engine and schedule overrides for ACADSYNC v2.0.0.
-//
-// Implements Section 7.3 and 7.5 of the Scope Document:
+// requests.js — Teacher change-request engine and schedule overrides for ACADSYNC.
 // 1. Free Slot Calculator: identifies genuinely conflict-free slots for class, teacher & room.
 // 2. Change Request submission with conflict pre-validation.
 // 3. Admin review workflow (approve/reject).
