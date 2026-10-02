@@ -1,129 +1,145 @@
-# ACADSYNC
+# RP-ACADSYNC — Academic Scheduling & Synchronization System
 
-Automatic timetable generator for engineering colleges — define years,
-classes, subjects, teachers, and classrooms, configure period timings, and
-generate a conflict-free weekly timetable with one click.
+**RP-ACADSYNC** is an automated, AI-assisted institutional timetable generator and academic synchronization platform built for engineering colleges and universities.
 
-This app is **fully local**. There's no login, no cloud database, and no
-account to set up — clone it, install, run, and it opens straight to the
-dashboard. All your data lives in a single SQLite file on your own machine.
+It eliminates manual scheduling conflicts using a **Genetic Algorithm (GA) with Memetic Local Repair**, coordinates **Concurrent Multi-Batch Laboratories (Batch A/B/C)** in specialized rooms, supports **Role-Based Access Control (Admin, Faculty, Student)**, features an intelligent **Gemini 3.6 Flash AI Chatbot**, and provides **8 curated artisan color themes** for maximum focus and readability.
 
-## Architecture
+---
 
-- **Frontend**: React + TypeScript + Vite, shadcn/ui, Tailwind CSS
-- **Backend**: a small Express server (`server/`) backed by SQLite
-  (`better-sqlite3`) — the whole database is one file:
-  `server/data/acadsync.db`
-- Two processes run side by side in development: Vite serves the frontend on
-  `:8080` and proxies any `/api/*` request to the Express server on `:4000`
+## 🌟 Key Features
 
-There is no external service, API key, or environment variable required to
-run this app.
+### 1. 🧬 Conflict-Free Genetic Algorithm Scheduler
+* **Hard Constraint Enforcement**: 0 collisions for teachers, classrooms, classes, and batches.
+* **Specialized Lab Allocation**: Practical subjects are automatically routed to verified laboratory facilities.
+* **Credit-Based Contact Hours**:
+  * **Theory Subjects**: $1\text{ Credit} = 1\text{ Hour/Week}$ of classroom lecture.
+  * **Laboratory Subjects**: $1\text{ Credit} = 2\text{ Hours/Week}$ of hands-on practical session.
+* **Concurrent Batch Synchronization**: Automatically schedules `Batch A`, `Batch B`, and `Batch C` in parallel rooms during 2-hour laboratory blocks to maximize free windows for theory lectures.
+* **Daily Workload Limits**: Distributes faculty load evenly across the week with configurable daily lecture maximums.
 
-## Getting started
+---
 
-**Requirements:** Node.js 18+ and npm.
+### 2. 👥 Role-Based Access Control (RBAC) & Authentication
+* **Security Architecture**: Native `node:crypto` `scrypt` hashing with unique cryptographic salt per user and signed `HMAC-SHA256` session tokens.
+* **Three Dedicated Portals**:
+  * **System Administrator**: Complete governance over classes, teachers, subjects, classrooms, generation, backup export, and system kill switch.
+  * **Faculty Portal**: View personalized schedule, submit temporary slot change requests, and track approval status.
+  * **Student Portal**: View live class and batch timetable, room locations, and schedule updates.
 
+---
+
+### 3. 🤖 Intelligent Assistant (Gemini 3.6 Flash)
+* **Natural Language Help & Timetable Queries**: Ask questions about platform navigation or schedule data (e.g. *"Which lab does SE-AIDS have on Friday?"*, *"Where is Dr. S. N. Pawar at 11:00 on Monday?"*).
+* **Python Backend Engine**: Lightweight, fast Python assistant integration with dynamic SQLite context injection.
+* **Minimalist UI**: Sleek, circular bottom-right floating trigger button (FAB) with instant expandable panel.
+
+---
+
+### 4. 🎨 8 Artisan Visual Themes
+Designed with custom HSL token architecture for eye-comfort and optimal contrast:
+1. **Warm Linen & Olive** *(Default Signature Artisan)*
+2. **Cool Slate & Sage** *(Cool Editorial Botanic)*
+3. **Terracotta & Dune** *(Desert Warmth & Clay)*
+4. **Nocturne Olive** *(Dark Studio Mode)*
+5. **Espresso & Oat** *(Rich Roast Minimalist)*
+6. **Indigo & Parchment** *(Oxford Tailored Navy)*
+7. **Burgundy & Tweed** *(Heritage Bordeaux Rose)*
+8. **Nordic Moss & Pine** *(Deep Twilight Forest Dark Studio)*
+
+*Switch themes instantly from **Settings** (`/settings`) with automatic localStorage persistence.*
+
+---
+
+### 5. 📦 Standardized Master CSV Import & Backup Export
+* **Single-File Import**: Import all academic years, classes, student batches, classrooms, laboratories, faculty, subjects, and relationships via `college_master_import.csv`.
+* **Lossless Master Export**: Export the entire institutional database with relational integrity with one click in **Settings**.
+* **Safety Controls**: Double-confirmation emergency kill switch (`DELETE ALL DATA`) preserving administrator credentials.
+
+---
+
+## 🏗️ Architecture & Tech Stack
+
+```
+RP-ACADSYNC/
+├── src/                          # React + TypeScript Frontend (Vite)
+│   ├── components/               # UI components (shadcn/ui, timetable grids, chat widget)
+│   ├── pages/                    # Dashboard, Timetables, Classes, Teachers, Subjects, Settings, Login
+│   ├── services/                 # Auth, Theme, Timetable, Admin API clients
+│   └── index.css                 # CSS token palettes for all 8 artisan themes
+├── server/                       # Node.js + Express API Backend
+│   ├── db.js                     # SQLite schema & database migrations (better-sqlite3)
+│   ├── index.js                  # Express API routes
+│   ├── chatbot/assistant.py      # Python Gemini AI Assistant
+│   ├── lib/                      # Auth, Generator, Importer, Exporter, Requests, AdminData
+│   ├── test/                     # Node.js native test suite (39 tests)
+│   └── data/acadsync.db          # Self-contained SQLite database (WAL mode)
+└── public/                       # Favicons, robots.txt, master import template
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+* **Node.js** v18 or newer
+* **Python 3.9+** (for optional Gemini AI assistant)
+
+### 1. Installation
 ```bash
-git clone <this-repo-url>
+git clone https://github.com/Rugved-Patil/RP-ACADSYNC.git
 cd RP-ACADSYNC
-npm install        # installs both the frontend and server dependencies
-npm run dev         # starts the frontend (:8080) and the API server (:4000) together
+npm install
 ```
 
-Then open **http://localhost:8080**. That's it — no `.env` file, no database
-setup, no signup screen.
+### 2. Configure Environment (Optional for Chatbot)
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+*(Add your `GEMINI_API_KEY` in `.env` if you wish to use the live Gemini 3.6 Flash assistant).*
 
-To run the two halves separately (e.g. for debugging):
+### 3. Run Development Server
+```bash
+npm run dev
+```
+* **Frontend Application**: `http://localhost:5173`
+* **Backend API**: `http://localhost:4000`
+
+---
+
+## 🔑 Default Credentials
+
+The platform is pre-seeded with authentic engineering college curriculum data:
+
+| Portal | Email | Password | Role |
+| :--- | :--- | :--- | :--- |
+| **Admin Portal** | `admin@acadsync.edu` | `admin123` | Full Administrative Access |
+| **Faculty Portal** | `snpawar@jnec.ac.in` *(or any faculty email)* | `teacher123` | Faculty View & Change Requests |
+| **Student Portal** | `student.seecce@jnec.ac.in` *(or any class rep)* | `student123` | Class & Batch Timetable View |
+
+*(1-Click Demo Login buttons are also available directly on the `/login` screen).*
+
+---
+
+## 🧪 Testing & Verification
+
+Run the comprehensive unit and integration test suite:
 
 ```bash
-npm run dev:server   # Express + SQLite API on :4000
-npm run dev:client   # Vite frontend on :8080
+npm test
 ```
+* **39 Test Suites Passing**:
+  * Administrative Kill-Switch & Lossless Re-seed
+  * Password Hashing (scrypt), Salt Sanitization & HMAC Token Signing
+  * Role Authorization & Protected Routes
+  * AI Chatbot Assistant Context Queries
+  * SQLite CRUD & Foreign Key Integrity
+  * Multi-format Timetable Exports (CSV, Excel, HTML, JSON)
+  * Genetic Algorithm 0-Hard-Violation Timetable Generation
+  * Master CSV Relational Bulk Importer
+  * Teacher Change Requests & Schedule Overrides
 
-### Your data
+---
 
-Everything you enter is stored in `server/data/acadsync.db`. That file is
-git-ignored, so a fresh clone always starts empty. To back up your data, copy
-that file somewhere safe. To start over, delete it — it's recreated
-automatically the next time the server starts.
-
-### Building for production
-
-```bash
-npm run build        # builds the frontend into dist/
-npm run dev:server    # the API server (dist/ isn't auto-served — see note below)
-```
-
-`npm run build` only builds the frontend static files; you still need the
-Express server running to serve `/api`. This app was built for local,
-single-admin use rather than public deployment, so there's no bundled
-production launcher — if you want a single-process production setup, the
-simplest approach is to add `express.static` to `server/index.js` pointing
-at `../dist` and serve the whole app from port 4000.
-
-## What changed from the original Lovable/Supabase version
-
-This is a from-scratch local rewrite of a project that used to run on
-Supabase (Postgres + Auth + Deno Edge Functions). If you're comparing against
-an older version of this repo, here's what's different:
-
-**Removed entirely:**
-- **Login/auth** — there is no sign-up or sign-in page anymore. The app
-  opens directly to the dashboard as a single local admin. If you need
-  multi-user access control back, that's a real feature to design, not a
-  quick flag flip.
-- **Lab-scheduling side-feature** (the `lab_schedules` / `batches` /
-  `batch_teacher_assignments` tables, the "Manage Labs" dialog, and "Divide
-  into Batches") — this was a manually-managed system that ran in parallel
-  to the real timetable generator without being aware of it, and was called
-  out as a recurring source of bugs. It's gone. The core lab-handling that
-  the generator actually uses — marking a *subject* as a lab with a 1-2 hour
-  duration, and marking a *classroom* as a lab — is untouched.
-- **Duplicate Classrooms pages** — `ClassroomsPage.tsx` (which ran on stub
-  mock data) and the unrouted `Classrooms.tsx` are gone.
-  `ClassroomsManagement.tsx` is the one Classrooms screen now.
-- **The unused legacy Express/MongoDB backend** (`server.js`, `controllers/`,
-  `models/`, `routes/`, etc.) — this was already dead code, never called by
-  the frontend, and has been deleted.
-- **PDF import** — the old CSV/Excel/PDF bulk importer's PDF path was a
-  best-effort text-scraping heuristic that rarely produced usable tables.
-  CSV and Excel import both still work; PDF doesn't. Export/download to PDF
-  is unaffected — that still works fine, since generating a PDF is a much
-  easier problem than parsing one.
-
-**Fixed (a real gap that pre-dates this rewrite):**
-- The "Manage Teachers" dialog on the Subjects page — previously non-functional dead code — now properly manages which teachers are eligible to teach each subject (`teacher_subject_assignments`). Without this wiring, "Generate Timetable" had nothing to assign, so it would silently produce zero lessons for any subject with no eligible teacher. Assign at least one teacher to every subject you want scheduled.
-- The Year field on the Classes page used to be a free-text box where you had to type a year's UUID by hand. It's now a real dropdown, with an inline "Add Year" box since there was previously no page to manage years at all.
-
-**Everything else** (CRUD for classes/subjects/teachers/classrooms/timings,
-the constraint-based generator, timetable views, CSV/Excel/PDF/HTML/JSON
-export, WhatsApp/email share links, draft save/load) works the same as
-before — just against the local SQLite database instead of Supabase.
-
-## Project layout
-
-```
-src/                  React frontend
-  lib/api.ts           Local API client — a small Supabase-shaped shim over fetch()
-  services/timetableService.ts
-  pages/, components/
-server/               Express + SQLite backend
-  db.js                Schema + type conversion helpers
-  index.js             Express app / route registration
-  lib/
-    genericTable.js     Generic CRUD REST layer for every table
-    generator.js         Timetable generation algorithm
-    importer.js           CSV/Excel bulk import
-    exporter.js            CSV/JSON/HTML/PDF/Excel timetable export
-    sharer.js               WhatsApp/email share text formatting
-  data/acadsync.db     Your SQLite database (git-ignored, created on first run)
-```
-
-## Planned AI features (not built yet)
-
-A separate project-scope document outlines four AI/ML additions planned for
-a future pass: a genetic-algorithm optimizer for the generator, a
-natural-language timetable assistant, a substitute-teacher recommender, and
-smart CSV column-mapping. None of that is in this codebase yet — this
-rewrite's scope was getting the core app fully local and functional.
+## 📄 License
+Academic and institutional use. Developed by Rugved Patil.
