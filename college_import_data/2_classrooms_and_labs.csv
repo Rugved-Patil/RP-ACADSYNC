@@ -1,0 +1,17 @@
+Classroom Name,Capacity,Is Lab,Location,Equipment
+SF-31,70,No,Second Floor SF-31,"Projector, Audio System, Smart Board"
+SF-32,70,No,Second Floor SF-32,"Projector, Audio System"
+SF-33,70,No,Second Floor SF-33,"Projector, Audio System, Smart Board"
+TF-31,70,No,Third Floor TF-31,"Projector, Audio System"
+TF-32,70,No,Third Floor TF-32,"Projector, Audio System"
+FF-22,60,No,First Floor FF-22,Projector
+Jack Kilby Hall,120,No,Ground Floor,"Podium, Dual Projectors, Sound System"
+System Software Lab (FF-21),35,Yes,First Floor FF-21,"35 High-End Linux Workstations, GCC/GDB"
+Programming Lab-1 (FF-28),35,Yes,First Floor FF-28,"35 Systems, Oracle/MySQL, Java/Python"
+Programming Lab-2 (FF-28),35,Yes,First Floor FF-28,"35 Systems, Network Simulator, Wireshark"
+Analog Circuit Lab (FF-33),35,Yes,First Floor FF-33,"DSO, Function Generators, Multimeters, Breadboards"
+EDC Lab (FF-34),35,Yes,First Floor FF-34,"Semiconductor Kits, CRO, Power Supplies"
+Communication Lab (FF-36),35,Yes,First Floor FF-36,"RF Modulators, Optical Fiber Trainers"
+DMP Lab (FF-38),35,Yes,First Floor FF-38,"Microprocessor & 8051 Kits, FPGA Boards"
+Data Science Lab-II (FF-40),35,Yes,First Floor FF-40,"GPU Systems, Jupyter Notebooks, Node.js"
+Electronic Workshop Lab (FF-30),35,Yes,First Floor FF-30,"PCB Milling, Soldering Stations, Basic Electrical"

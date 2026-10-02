@@ -49,6 +49,8 @@ describe("Genetic Algorithm Timetable Generator Tests", () => {
     const teacherMap = new Map(teachers.map((t) => [t.id, t]));
     const slotOrderMap = new Map(timeSlots.map((ts) => [ts.id, ts.slot_order]));
 
+    const classAllSlots = new Set();
+    const classBatchSlots = new Set();
     const classDailyLessons = new Map();
 
     for (const l of lessons) {
@@ -57,16 +59,26 @@ describe("Genetic Algorithm Timetable Generator Tests", () => {
       const tId = l.teacher_id;
       const cId = l.class_id;
       const rId = l.classroom_id;
+      const batch = l.batch;
 
       // 1. Teacher double-booking check
       const tKey = `${day}:${slot}:${tId}`;
       assert.ok(!teacherSlots.has(tKey), `Teacher ${tId} double booked on day ${day} slot ${slot}`);
       teacherSlots.add(tKey);
 
-      // 2. Class double-booking check
-      const cKey = `${day}:${slot}:${cId}`;
-      assert.ok(!classSlots.has(cKey), `Class ${cId} double booked on day ${day} slot ${slot}`);
-      classSlots.add(cKey);
+      // 2. Class and batch double-booking check
+      if (!batch) {
+        const cKey = `${day}:${slot}:${cId}`;
+        assert.ok(!classAllSlots.has(cKey), `Class ${cId} double booked for whole class on day ${day} slot ${slot}`);
+        assert.ok(!classBatchSlots.has(cKey), `Class ${cId} whole class lecture conflicts with batch on day ${day} slot ${slot}`);
+        classAllSlots.add(cKey);
+      } else {
+        const cKey = `${day}:${slot}:${cId}`;
+        assert.ok(!classAllSlots.has(cKey), `Batch ${batch} of class ${cId} conflicts with whole class lecture on day ${day} slot ${slot}`);
+        const bKey = `${day}:${slot}:${cId}:${batch}`;
+        assert.ok(!classBatchSlots.has(bKey), `Batch ${batch} of class ${cId} double booked on day ${day} slot ${slot}`);
+        classBatchSlots.add(bKey);
+      }
 
       // 3. Room double-booking check
       if (rId) {

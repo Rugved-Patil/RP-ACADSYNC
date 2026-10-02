@@ -57,6 +57,7 @@ export const TimetableEditDialog: React.FC<TimetableEditDialogProps> = ({
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
   const [selectedClassroomId, setSelectedClassroomId] = useState<string>("no-classroom");
+  const [selectedBatch, setSelectedBatch] = useState<string>("all");
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [eligibleTeachers, setEligibleTeachers] = useState<Teacher[]>([]);
   const [eligibleSubjects, setEligibleSubjects] = useState<Subject[]>([]);
@@ -76,6 +77,7 @@ export const TimetableEditDialog: React.FC<TimetableEditDialogProps> = ({
         setSelectedSubjectId(lesson.subjectId);
         setSelectedTeacherId(lesson.teacherId);
         setSelectedClassroomId(lesson.classroomId || "no-classroom");
+        setSelectedBatch(lesson.batch || "all");
         setActiveTab("edit");
 
         // Load all classrooms
@@ -86,6 +88,7 @@ export const TimetableEditDialog: React.FC<TimetableEditDialogProps> = ({
         setSelectedSubjectId("");
         setSelectedTeacherId("");
         setSelectedClassroomId("no-classroom");
+        setSelectedBatch("all");
         setActiveTab("add");
       }
     }
@@ -180,6 +183,7 @@ export const TimetableEditDialog: React.FC<TimetableEditDialogProps> = ({
     setIsLoading(true);
     
     try {
+      const batchVal = selectedBatch === "all" ? undefined : selectedBatch;
       if (lesson) {
         // Update existing lesson
         const updatedLesson: Lesson = {
@@ -188,6 +192,7 @@ export const TimetableEditDialog: React.FC<TimetableEditDialogProps> = ({
           subjectId: selectedSubjectId,
           teacherId: selectedTeacherId,
           classroomId: selectedClassroomId === "no-classroom" ? undefined : selectedClassroomId,
+          batch: batchVal,
         };
         
         onSave(updatedLesson);
@@ -201,6 +206,7 @@ export const TimetableEditDialog: React.FC<TimetableEditDialogProps> = ({
           classroom_id: selectedClassroomId === "no-classroom" ? undefined : selectedClassroomId,
           time_slot_id: timeSlotId,
           day,
+          batch: batchVal,
           // Legacy compatibility fields
           classId: selectedClassId,
           subjectId: selectedSubjectId,
@@ -330,6 +336,25 @@ export const TimetableEditDialog: React.FC<TimetableEditDialogProps> = ({
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="batch">Batch / Student Group</Label>
+                <Select
+                  value={selectedBatch}
+                  onValueChange={setSelectedBatch}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="batch">
+                    <SelectValue placeholder="Select batch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Whole Class (Theory / All Batches)</SelectItem>
+                    <SelectItem value="Batch A">Batch A</SelectItem>
+                    <SelectItem value="Batch B">Batch B</SelectItem>
+                    <SelectItem value="Batch C">Batch C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           ) : (
             // Add mode for new lesson
@@ -417,6 +442,25 @@ export const TimetableEditDialog: React.FC<TimetableEditDialogProps> = ({
                           {classroom.name} ({classroom.isLab ? 'Lab' : 'Room'})
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="add-batch">Batch / Student Group</Label>
+                  <Select
+                    value={selectedBatch}
+                    onValueChange={setSelectedBatch}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger id="add-batch">
+                      <SelectValue placeholder="Select batch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Whole Class (Theory / All Batches)</SelectItem>
+                      <SelectItem value="Batch A">Batch A</SelectItem>
+                      <SelectItem value="Batch B">Batch B</SelectItem>
+                      <SelectItem value="Batch C">Batch C</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

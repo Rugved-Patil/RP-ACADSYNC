@@ -1,28 +1,37 @@
 // generator.js — Genetic Algorithm (GA) timetable generation engine for ACADSYNC.
 //
-// Implements Section 6.3 of the Scope Document:
-// Searches a population of candidate weekly timetables and evolves toward one
-// that satisfies every hard constraint and scores well on soft-constraint quality.
+// Implements Section 6.3 of the Scope Document with Institutional Batch Lab support:
+// - Whole-class theory lectures attend together in lecture classrooms.
+// - Laboratory courses are divided into batches (e.g. Batch A, Batch B, Batch C)
+//   allowing concurrent, parallel lab sessions for different subjects in specialized labs.
+// - Individual batches can also have standalone lab sessions without conflicts.
 //
 // Hard constraints:
 // 1. No teacher double-booked in the same slot.
-// 2. No class double-booked in the same slot.
-// 3. No classroom double-booked in the same slot.
-// 4. No back-to-back repeat of the same subject/teacher/class combination.
+// 2. No class or batch double-booked in the same slot (distinct batches can run concurrently).
+// 3. No classroom/lab double-booked in the same slot.
+// 4. No back-to-back repeat of the same theory lecture for the same class.
 // 5. No teacher exceeding their maximum daily lesson count.
 // 6. Lab subjects placed only in lab-flagged classrooms.
 //
 // Soft constraints:
-// 1. Teacher gap count (minimize idle periods between classes on any day).
-// 2. Uneven daily load across teachers (balance teacher load across working days).
+// 1. Parallel lab bonus (encourage batches of same class to synchronize lab windows).
+// 2. Teacher gap count (minimize idle periods between classes on any day).
 // 3. Subject distribution (avoid clustering same non-lab subject on the same day).
-// 4. Room-utilization balance (prefer assigned default classroom for classes).
+// 4. Room-utilization balance (prefer assigned default classroom for theory).
 
 const { randomUUID } = require("crypto");
 const { db, fromRow } = require("../db");
 
 function randomChoice(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getClassBatches(cls) {
+  const count = cls.student_count || cls.capacity || 60;
+  if (count <= 25) return ["Batch A"];
+  if (count <= 45) return ["Batch A", "Batch B"];
+  return ["Batch A", "Batch B", "Batch C"];
 }
 
 function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40, maxGenerations = 80 }) {
@@ -96,37 +105,34 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
     const classSubjects = subjects.filter((subject) =>
       assignments.some((a) => a.class_id === cls.id && a.subject_id === subject.id)
     );
+    const batches = getClassBatches(cls);
 
     for (const subject of classSubjects) {
-      const periodsRequired = subject.periods_per_week || 3;
       const isLab = !!subject.is_lab;
-      const labDuration = isLab && subject.lab_duration_hours === 2 ? 2 : 1;
+      const labDuration = isLab && (subject.lab_duration_hours === 2 || !subject.lab_duration_hours) ? 2 : 1;
 
-      if (labDuration === 2) {
-        // Multi-hour lab: 1 unit spans 2 consecutive periods
-        lessonUnits.push({
-          unitId: `${cls.id}_${subject.id}_lab`,
-          class_id: cls.id,
-          subject_id: subject.id,
-          is_lab: true,
-          duration: 2,
-        });
-        for (let p = 2; p < periodsRequired; p += 2) {
+      if (isLab) {
+        // Multi-hour batch lab: each batch of students takes this lab session
+        for (const batch of batches) {
           lessonUnits.push({
-            unitId: `${cls.id}_${subject.id}_lab_${p}`,
+            unitId: `${cls.id}_${subject.id}_${batch}`,
             class_id: cls.id,
             subject_id: subject.id,
+            batch: batch,
             is_lab: true,
-            duration: 2,
+            duration: labDuration,
           });
         }
       } else {
+        // Whole-class theory lecture (all batches attend together)
+        const periodsRequired = subject.periods_per_week || 3;
         for (let p = 0; p < periodsRequired; p++) {
           lessonUnits.push({
-            unitId: `${cls.id}_${subject.id}_${p}`,
+            unitId: `${cls.id}_${subject.id}_theory_${p}`,
             class_id: cls.id,
             subject_id: subject.id,
-            is_lab: isLab,
+            batch: null,
+            is_lab: false,
             duration: 1,
           });
         }
@@ -175,18 +181,206 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
     };
   }
 
+  // Smart conflict-aware initializer that schedules parallel batch lab blocks
+  function generateSmartChromosome() {
+    const bookedTeachers = new Set();
+    const bookedRooms = new Set();
+    const bookedClassAll = new Set();
+    const bookedClassBatch = new Set();
+    const teacherDayCounts = new Map();
+
+    const genes = new Array(lessonUnits.length);
+
+    const labIndices = [];
+    const theoryIndices = [];
+    for (let i = 0; i < lessonUnits.length; i++) {
+      if (lessonUnits[i].is_lab) labIndices.push(i);
+      else theoryIndices.push(i);
+    }
+
+    // Group lab units by class
+    const labsByClass = new Map();
+    for (const idx of labIndices) {
+      const u = lessonUnits[idx];
+      if (!labsByClass.has(u.class_id)) labsByClass.set(u.class_id, []);
+      labsByClass.get(u.class_id).push(idx);
+    }
+
+    // Place lab batches into synchronized 2-hour consecutive pairs
+    for (const [classId, uIndices] of labsByClass.entries()) {
+      const cls = classes.find((c) => c.id === classId);
+      const batches = getClassBatches(cls);
+      const byBatch = new Map();
+      batches.forEach((b) => byBatch.set(b, []));
+      for (const idx of uIndices) {
+        if (byBatch.has(lessonUnits[idx].batch)) {
+          byBatch.get(lessonUnits[idx].batch).push(idx);
+        }
+      }
+
+      const numBlocks = Math.max(...batches.map((b) => byBatch.get(b)?.length || 0));
+
+      for (let bIdx = 0; bIdx < numBlocks; bIdx++) {
+        let chosenDay = null;
+        let chosenPair = null;
+
+        const days = [...workingDays].sort(() => Math.random() - 0.5);
+        const pairs = [...consecutivePairs].sort(() => Math.random() - 0.5);
+
+        dayLoop: for (const d of days) {
+          for (const pair of pairs) {
+            const slotIds = pair.map((s) => s.id);
+            const isClassFree = slotIds.every(
+              (sid) =>
+                !bookedClassAll.has(`${d}:${sid}:${classId}`) &&
+                batches.every((b) => !bookedClassBatch.has(`${d}:${sid}:${classId}:${b}`))
+            );
+            if (isClassFree) {
+              chosenDay = d;
+              chosenPair = pair;
+              break dayLoop;
+            }
+          }
+        }
+
+        if (!chosenDay || !chosenPair) {
+          chosenDay = days[0];
+          chosenPair = pairs[0];
+        }
+
+        const slotIds = chosenPair.map((s) => s.id);
+
+        for (const b of batches) {
+          const unitIdx = byBatch.get(b)?.[bIdx];
+          if (unitIdx === undefined) continue;
+          const unit = lessonUnits[unitIdx];
+
+          const eligibleTeachers = (teachersBySubject.get(unit.subject_id) || teachers).sort(
+            () => Math.random() - 0.5
+          );
+          let assignedTeacher = eligibleTeachers[0];
+          for (const t of eligibleTeachers) {
+            const curCount = teacherDayCounts.get(`${t.id}:${chosenDay}`) || 0;
+            const maxD = t.max_periods_per_day || 5;
+            if (curCount + 2 <= maxD) {
+              const isFree = slotIds.every((sid) => !bookedTeachers.has(`${chosenDay}:${sid}:${t.id}`));
+              if (isFree) {
+                assignedTeacher = t;
+                break;
+              }
+            }
+          }
+
+          const shuffledLabs = [...labRooms].sort(() => Math.random() - 0.5);
+          let assignedRoom = shuffledLabs[0] || fallbackRooms[0];
+          for (const r of shuffledLabs) {
+            const isFree = slotIds.every((sid) => !bookedRooms.has(`${chosenDay}:${sid}:${r.id}`));
+            if (isFree) {
+              assignedRoom = r;
+              break;
+            }
+          }
+
+          genes[unitIdx] = {
+            day: chosenDay,
+            slotIds: slotIds,
+            teacher_id: assignedTeacher.id,
+            classroom_id: assignedRoom?.id || null,
+          };
+
+          for (const sid of slotIds) {
+            bookedTeachers.add(`${chosenDay}:${sid}:${assignedTeacher.id}`);
+            if (assignedRoom?.id) bookedRooms.add(`${chosenDay}:${sid}:${assignedRoom.id}`);
+            bookedClassBatch.add(`${chosenDay}:${sid}:${classId}:${b}`);
+            bookedClassAll.add(`${chosenDay}:${sid}:${classId}`);
+          }
+          const curCount = teacherDayCounts.get(`${assignedTeacher.id}:${chosenDay}`) || 0;
+          teacherDayCounts.set(`${assignedTeacher.id}:${chosenDay}`, curCount + 2);
+        }
+      }
+    }
+
+    // Schedule whole-class theory units
+    for (const idx of theoryIndices) {
+      const unit = lessonUnits[idx];
+      const eligibleTeachers = (teachersBySubject.get(unit.subject_id) || teachers).sort(
+        () => Math.random() - 0.5
+      );
+      const defRoomId = classDefaultRoom.get(unit.class_id);
+      const defRoom = classrooms.find((r) => r.id === defRoomId);
+      const candidateRooms = defRoom ? [defRoom, ...theoryRooms] : theoryRooms;
+
+      let bestSlot = null;
+      let bestDay = null;
+      let bestTeacher = eligibleTeachers[0];
+      let bestRoom = candidateRooms[0] || fallbackRooms[0];
+
+      const days = [...workingDays].sort(() => Math.random() - 0.5);
+      const slots = [...timeSlots].sort(() => Math.random() - 0.5);
+
+      search: for (const d of days) {
+        for (const s of slots) {
+          const sid = s.id;
+          if (bookedClassAll.has(`${d}:${sid}:${unit.class_id}`)) continue;
+
+          for (const t of eligibleTeachers) {
+            const curCount = teacherDayCounts.get(`${t.id}:${d}`) || 0;
+            const maxD = t.max_periods_per_day || 5;
+            if (curCount >= maxD) continue;
+            if (bookedTeachers.has(`${d}:${sid}:${t.id}`)) continue;
+
+            for (const r of candidateRooms) {
+              if (r && bookedRooms.has(`${d}:${sid}:${r.id}`)) continue;
+
+              bestDay = d;
+              bestSlot = sid;
+              bestTeacher = t;
+              bestRoom = r;
+              break search;
+            }
+          }
+        }
+      }
+
+      if (!bestSlot) {
+        bestDay = days[0];
+        bestSlot = slots[0].id;
+      }
+
+      genes[idx] = {
+        day: bestDay,
+        slotIds: [bestSlot],
+        teacher_id: bestTeacher.id,
+        classroom_id: bestRoom?.id || null,
+      };
+
+      bookedTeachers.add(`${bestDay}:${bestSlot}:${bestTeacher.id}`);
+      if (bestRoom?.id) bookedRooms.add(`${bestDay}:${bestSlot}:${bestRoom.id}`);
+      bookedClassAll.add(`${bestDay}:${bestSlot}:${unit.class_id}`);
+      const curCount = teacherDayCounts.get(`${bestTeacher.id}:${bestDay}`) || 0;
+      teacherDayCounts.set(`${bestTeacher.id}:${bestDay}`, curCount + 1);
+    }
+
+    return genes;
+  }
+
   // Fitness function evaluating hard & soft constraints
+  const teacherMap = new Map(teachers.map((t) => [t.id, t]));
+
   function evaluateFitness(genes) {
     let hardViolations = 0;
 
     const teacherSlots = new Set();
-    const classSlots = new Set();
     const roomSlots = new Set();
+    const classWholeSlots = new Set();
+    const classBatchSlots = new Set();
+    const classAnyBatchSlots = new Set();
 
     const teacherDailyCounts = new Map();
     const classSubjectDaily = new Map();
     const classDailyLessons = new Map();
     const teacherDailySlots = new Map();
+    const labBlocks = new Map();
 
     let preferredRoomBonus = 0;
 
@@ -198,6 +392,7 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
       const classId = unit.class_id;
       const roomId = gene.classroom_id;
       const subjectId = unit.subject_id;
+      const batch = unit.batch;
 
       // Hard constraint 6: Lab subject placed only in lab-flagged classroom
       if (unit.is_lab && roomId) {
@@ -207,7 +402,7 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
         }
       }
 
-      // Soft constraint 4: Room match bonus
+      // Soft constraint 4: Room match bonus for theory
       if (!unit.is_lab && roomId && roomId === classDefaultRoom.get(classId)) {
         preferredRoomBonus += 1;
       }
@@ -218,11 +413,6 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
         if (teacherSlots.has(tKey)) hardViolations += 2;
         else teacherSlots.add(tKey);
 
-        // Hard constraint 2: Class double-booking
-        const cKey = `${day}:${slotId}:${classId}`;
-        if (classSlots.has(cKey)) hardViolations += 2;
-        else classSlots.add(cKey);
-
         // Hard constraint 3: Classroom double-booking
         if (roomId) {
           const rKey = `${day}:${slotId}:${roomId}`;
@@ -230,11 +420,35 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
           else roomSlots.add(rKey);
         }
 
+        // Hard constraint 2: Class & Batch double-booking
+        if (!batch) {
+          // Whole-class lecture: cannot overlap with another whole-class lecture OR any batch lab
+          if (
+            classWholeSlots.has(`${day}:${slotId}:${classId}`) ||
+            classAnyBatchSlots.has(`${day}:${slotId}:${classId}`)
+          ) {
+            hardViolations += 2;
+          }
+          classWholeSlots.add(`${day}:${slotId}:${classId}`);
+        } else {
+          // Batch lab:
+          // 1. Conflict if whole class is having a lecture
+          if (classWholeSlots.has(`${day}:${slotId}:${classId}`)) {
+            hardViolations += 2;
+          }
+          // 2. Conflict if this specific batch is already booked
+          const bKey = `${day}:${slotId}:${classId}:${batch}`;
+          if (classBatchSlots.has(bKey)) {
+            hardViolations += 2;
+          }
+          classBatchSlots.add(bKey);
+          classAnyBatchSlots.add(`${day}:${slotId}:${classId}`);
+        }
+
         const tdKey = `${teacherId}:${day}`;
         teacherDailyCounts.set(tdKey, (teacherDailyCounts.get(tdKey) || 0) + 1);
 
         const slotOrder = slotOrderMap.get(slotId) || 0;
-
         if (!teacherDailySlots.has(tdKey)) teacherDailySlots.set(tdKey, []);
         teacherDailySlots.get(tdKey).push(slotOrder);
 
@@ -243,15 +457,20 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
         classDailyLessons.get(cdKey).push({ slotOrder, subjectId, isLab: unit.is_lab });
       }
 
+      // Soft constraint: Parallel lab bonus
+      if (unit.is_lab && gene.slotIds.length > 0) {
+        const blkKey = `${day}:${gene.slotIds[0]}:${classId}`;
+        labBlocks.set(blkKey, (labBlocks.get(blkKey) || 0) + 1);
+      }
+
       const csdKey = `${classId}:${day}:${subjectId}`;
       classSubjectDaily.set(csdKey, (classSubjectDaily.get(csdKey) || 0) + 1);
     }
 
     // Hard constraint 5: Teacher daily lesson limit
-    const teacherMap = new Map(teachers.map((t) => [t.id, t]));
     for (const [tdKey, count] of teacherDailyCounts.entries()) {
       const [tId] = tdKey.split(":");
-      const maxDaily = teacherMap.get(tId)?.max_periods_per_day || 4;
+      const maxDaily = teacherMap.get(tId)?.max_periods_per_day || 5;
       if (count > maxDaily) {
         hardViolations += (count - maxDaily) * 2;
       }
@@ -279,23 +498,30 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
         slots.sort((a, b) => a - b);
         for (let i = 0; i < slots.length - 1; i++) {
           const diff = slots[i + 1] - slots[i];
-          if (diff > 1) {
-            totalGaps += diff - 1;
-          }
+          if (diff > 1) totalGaps += diff - 1;
         }
       }
     }
 
-    // Soft constraint 2 & 3: Subject distribution across days (penalize multiple theory lectures on same day)
+    // Soft constraint: Parallel lab synchronization bonus
+    let parallelLabBonus = 0;
+    for (const count of labBlocks.values()) {
+      if (count > 1) {
+        parallelLabBonus += (count - 1) * 35;
+      }
+    }
+
+    // Soft constraint 2 & 3: Subject distribution across days
     let duplicateSubjectDays = 0;
     for (const [_, count] of classSubjectDaily.entries()) {
       if (count > 1) duplicateSubjectDays += count - 1;
     }
 
     const fitness =
-      -hardViolations * 1000 -
-      totalGaps * 15 -
-      duplicateSubjectDays * 25 +
+      -hardViolations * 1000 +
+      parallelLabBonus -
+      totalGaps * 10 -
+      duplicateSubjectDays * 20 +
       preferredRoomBonus * 5;
 
     return {
@@ -303,156 +529,190 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
       hardViolations,
       totalGaps,
       duplicateSubjectDays,
+      parallelLabBonus,
     };
   }
 
-  // --- Run Genetic Algorithm Evolution Loop ---
-  let population = [];
-  for (let p = 0; p < popSize; p++) {
-    const genes = lessonUnits.map((u) => generateRandomGene(u));
-    const score = evaluateFitness(genes);
-    population.push({ genes, ...score });
-  }
-
-  population.sort((a, b) => b.fitness - a.fitness);
-  let bestSolution = population[0];
-  let plateauCount = 0;
-  const elitismCount = 2;
-  const mutationRate = 0.15;
-
-  for (let gen = 0; gen < maxGenerations; gen++) {
-    if (bestSolution.hardViolations === 0) {
-      plateauCount++;
-      if (plateauCount >= 12) break; // Terminate early when conflict-free & plateau reached
-    }
-
-    const nextGen = [];
-
-    // Elitism: retain top individuals
-    for (let e = 0; e < elitismCount; e++) {
-      nextGen.push(population[e]);
-    }
-
-    // Tournament selection
-    const selectParent = () => {
-      const i1 = Math.floor(Math.random() * popSize);
-      const i2 = Math.floor(Math.random() * popSize);
-      const i3 = Math.floor(Math.random() * popSize);
-      let best = population[i1];
-      if (population[i2].fitness > best.fitness) best = population[i2];
-      if (population[i3].fitness > best.fitness) best = population[i3];
-      return best;
-    };
-
-    while (nextGen.length < popSize) {
-      const parent1 = selectParent();
-      const parent2 = selectParent();
-
-      // Uniform crossover
-      const childGenes = [];
-      for (let i = 0; i < lessonUnits.length; i++) {
-        childGenes.push(Math.random() < 0.5 ? { ...parent1.genes[i] } : { ...parent2.genes[i] });
-      }
-
-      // Mutation
-      for (let i = 0; i < childGenes.length; i++) {
-        if (Math.random() < mutationRate) {
-          const unit = lessonUnits[i];
-          const mutType = Math.random();
-          if (mutType < 0.6) {
-            // Slot & day mutation
-            const newDay = randomChoice(workingDays);
-            let newSlots;
-            if (unit.duration === 2) {
-              const pair =
-                consecutivePairs.length > 0
-                  ? randomChoice(consecutivePairs)
-                  : [timeSlots[0], timeSlots[1] || timeSlots[0]];
-              newSlots = pair.map((s) => s.id);
-            } else {
-              newSlots = [randomChoice(timeSlots).id];
-            }
-            childGenes[i].day = newDay;
-            childGenes[i].slotIds = newSlots;
-          } else if (mutType < 0.8) {
-            // Teacher mutation
-            const eligible = teachersBySubject.get(unit.subject_id) || teachers;
-            childGenes[i].teacher_id = randomChoice(eligible).id;
-          } else {
-            // Room mutation
-            if (unit.is_lab) {
-              childGenes[i].classroom_id =
-                labRooms.length > 0 ? randomChoice(labRooms).id : randomChoice(fallbackRooms).id;
-            } else {
-              childGenes[i].classroom_id =
-                theoryRooms.length > 0 ? randomChoice(theoryRooms).id : randomChoice(fallbackRooms).id;
-            }
-          }
-        }
-      }
-
-      const childScore = evaluateFitness(childGenes);
-      nextGen.push({ genes: childGenes, ...childScore });
-    }
-
-    nextGen.sort((a, b) => b.fitness - a.fitness);
-    population = nextGen;
-
-    if (population[0].fitness > bestSolution.fitness) {
-      bestSolution = population[0];
-    }
-  }
-
-  // Local repair operator to resolve any remaining hard violations
-  function repairChromosome(genes) {
-    let currentScore = evaluateFitness(genes);
-    if (currentScore.hardViolations === 0) return genes;
-
-    const repaired = genes.map((g) => ({ ...g, slotIds: [...g.slotIds] }));
+  // Helper to pinpoint which unit indices are involved in collisions
+  function findConflictedIndices(genes) {
+    const conflicted = new Set();
+    const teacherSlots = new Map();
+    const roomSlots = new Map();
+    const classWholeSlots = new Map();
+    const classBatchSlots = new Map();
+    const classAnyBatchSlots = new Map();
+    const teacherDailyUnits = new Map();
+    const classDailyUnits = new Map();
 
     for (let i = 0; i < lessonUnits.length; i++) {
-      if (currentScore.hardViolations === 0) break;
       const unit = lessonUnits[i];
-      const gene = repaired[i];
+      const gene = genes[i];
+      const day = gene.day;
+      const teacherId = gene.teacher_id;
+      const classId = unit.class_id;
+      const roomId = gene.classroom_id;
+      const batch = unit.batch;
 
-      const candidateSlotPairs =
-        unit.duration === 2
-          ? consecutivePairs.map((p) => p.map((s) => s.id))
-          : timeSlots.map((ts) => [ts.id]);
+      for (const slotId of gene.slotIds) {
+        const tKey = `${day}:${slotId}:${teacherId}`;
+        if (teacherSlots.has(tKey)) {
+          conflicted.add(i);
+          conflicted.add(teacherSlots.get(tKey));
+        } else {
+          teacherSlots.set(tKey, i);
+        }
 
-      let bestGene = { ...gene, slotIds: [...gene.slotIds] };
-      let minViolations = currentScore.hardViolations;
-
-      for (const day of workingDays) {
-        for (const slotIds of candidateSlotPairs) {
-          repaired[i] = { ...gene, day, slotIds };
-          const evalRes = evaluateFitness(repaired);
-          if (evalRes.hardViolations < minViolations) {
-            minViolations = evalRes.hardViolations;
-            bestGene = { ...gene, day, slotIds };
-            if (minViolations === 0) break;
+        if (roomId) {
+          const rKey = `${day}:${slotId}:${roomId}`;
+          if (roomSlots.has(rKey)) {
+            conflicted.add(i);
+            conflicted.add(roomSlots.get(rKey));
+          } else {
+            roomSlots.set(rKey, i);
           }
         }
-        if (minViolations === 0) break;
+
+        if (!batch) {
+          const cKey = `${day}:${slotId}:${classId}`;
+          if (classWholeSlots.has(cKey)) {
+            conflicted.add(i);
+            conflicted.add(classWholeSlots.get(cKey));
+          } else {
+            classWholeSlots.set(cKey, i);
+          }
+          if (classAnyBatchSlots.has(cKey)) {
+            conflicted.add(i);
+            conflicted.add(classAnyBatchSlots.get(cKey));
+          }
+        } else {
+          const cKey = `${day}:${slotId}:${classId}`;
+          if (classWholeSlots.has(cKey)) {
+            conflicted.add(i);
+            conflicted.add(classWholeSlots.get(cKey));
+          }
+          const bKey = `${day}:${slotId}:${classId}:${batch}`;
+          if (classBatchSlots.has(bKey)) {
+            conflicted.add(i);
+            conflicted.add(classBatchSlots.get(bKey));
+          } else {
+            classBatchSlots.set(bKey, i);
+          }
+          classAnyBatchSlots.set(cKey, i);
+        }
+
+        const tdKey = `${teacherId}:${day}`;
+        if (!teacherDailyUnits.has(tdKey)) teacherDailyUnits.set(tdKey, []);
+        teacherDailyUnits.get(tdKey).push(i);
+
+        const cdKey = `${classId}:${day}`;
+        const slotOrder = slotOrderMap.get(slotId) || 0;
+        if (!classDailyUnits.has(cdKey)) classDailyUnits.set(cdKey, []);
+        classDailyUnits.get(cdKey).push({ index: i, slotOrder, subjectId: unit.subject_id, isLab: unit.is_lab });
       }
-
-      repaired[i] = bestGene;
-      currentScore = evaluateFitness(repaired);
     }
 
-    return repaired;
+    // Teacher daily limits
+    for (const [tdKey, indices] of teacherDailyUnits.entries()) {
+      const [tId] = tdKey.split(":");
+      const maxDaily = teacherMap.get(tId)?.max_periods_per_day || 5;
+      if (indices.length > maxDaily) {
+        indices.forEach((idx) => conflicted.add(idx));
+      }
+    }
+
+    // Back to back duplicate theory lectures
+    for (const [_, lessons] of classDailyUnits.entries()) {
+      lessons.sort((a, b) => a.slotOrder - b.slotOrder);
+      for (let k = 0; k < lessons.length - 1; k++) {
+        if (
+          !lessons[k].isLab &&
+          !lessons[k + 1].isLab &&
+          lessons[k].subjectId === lessons[k + 1].subjectId &&
+          lessons[k + 1].slotOrder === lessons[k].slotOrder + 1
+        ) {
+          conflicted.add(lessons[k].index);
+          conflicted.add(lessons[k + 1].index);
+        }
+      }
+    }
+
+    return Array.from(conflicted);
   }
 
-  // Guarantee 0 hard violations if possible via memetic repair
-  if (bestSolution.hardViolations > 0) {
-    const repairedGenes = repairChromosome(bestSolution.genes);
-    const repairedScore = evaluateFitness(repairedGenes);
-    if (repairedScore.hardViolations <= bestSolution.hardViolations) {
-      bestSolution = { genes: repairedGenes, ...repairedScore };
+  // Generate candidate solutions and perform fast conflict-directed repair until 0 violations
+  let bestSolution = null;
+  const maxAttempts = 8;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const candidateGenes = generateSmartChromosome();
+    let curScore = evaluateFitness(candidateGenes);
+    let repaired = candidateGenes;
+
+    if (curScore.hardViolations > 0) {
+      repaired = candidateGenes.map((g) => ({ ...g, slotIds: [...g.slotIds] }));
+      for (let pass = 1; pass <= 4 && curScore.hardViolations > 0; pass++) {
+        const conflictedIndices = findConflictedIndices(repaired);
+        if (conflictedIndices.length === 0) break;
+
+        let improved = false;
+        for (const i of conflictedIndices) {
+          if (curScore.hardViolations === 0) break;
+          const unit = lessonUnits[i];
+          const gene = repaired[i];
+
+          const candidatePairs =
+            unit.duration === 2
+              ? consecutivePairs.map((p) => p.map((s) => s.id))
+              : timeSlots.map((ts) => [ts.id]);
+
+          const eligibleTeachers = teachersBySubject.get(unit.subject_id) || teachers;
+          const candidateRooms = unit.is_lab
+            ? labRooms
+            : (classDefaultRoom.get(unit.class_id)
+                ? [classrooms.find((r) => r.id === classDefaultRoom.get(unit.class_id)), ...theoryRooms]
+                : theoryRooms);
+
+          let bestLocalGene = { ...gene };
+          let minLocalViolations = curScore.hardViolations;
+
+          for (const day of workingDays) {
+            for (const slotIds of candidatePairs) {
+              for (const t of eligibleTeachers) {
+                for (const rm of candidateRooms) {
+                  repaired[i] = { day, slotIds, teacher_id: t.id, classroom_id: rm?.id || null };
+                  const ev = evaluateFitness(repaired);
+                  if (ev.hardViolations < minLocalViolations) {
+                    minLocalViolations = ev.hardViolations;
+                    bestLocalGene = { day, slotIds, teacher_id: t.id, classroom_id: rm?.id || null };
+                    improved = true;
+                    if (minLocalViolations === 0) break;
+                  }
+                }
+                if (minLocalViolations === 0) break;
+              }
+              if (minLocalViolations === 0) break;
+            }
+            if (minLocalViolations === 0) break;
+          }
+
+          repaired[i] = bestLocalGene;
+          curScore = evaluateFitness(repaired);
+        }
+        if (!improved) break;
+      }
+    }
+
+    const solution = { genes: repaired, ...curScore };
+    if (!bestSolution || solution.fitness > bestSolution.fitness) {
+      bestSolution = solution;
+    }
+
+    if (bestSolution.hardViolations === 0) {
+      break;
     }
   }
 
-  // --- Persist the generated conflict-free timetable to SQLite ---
+  // --- Persist the generated timetable to SQLite ---
   const now = new Date().toISOString();
   const timetableId = randomUUID();
   const shareToken = randomUUID().replace(/-/g, "").substring(0, 16);
@@ -462,7 +722,18 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
   db.prepare(
     `INSERT INTO timetables (id, name, academic_year, year_id, timing_id, is_active, is_locked, share_token, generated_at, modified_at, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?, ?, ?, ?)`
-  ).run(timetableId, finalName, academicYear || new Date().getFullYear().toString(), yearId || null, activeTimingId, shareToken, now, now, now, now);
+  ).run(
+    timetableId,
+    finalName,
+    academicYear || new Date().getFullYear().toString(),
+    yearId || null,
+    activeTimingId,
+    shareToken,
+    now,
+    now,
+    now,
+    now
+  );
 
   const lessons = [];
   for (let i = 0; i < lessonUnits.length; i++) {
@@ -478,13 +749,14 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
         subject_id: unit.subject_id,
         teacher_id: gene.teacher_id,
         classroom_id: gene.classroom_id,
+        batch: unit.batch || null,
       });
     }
   }
 
   const insertLesson = db.prepare(
-    `INSERT INTO lessons (id, timetable_id, day, time_slot_id, class_id, subject_id, teacher_id, classroom_id, created_at, updated_at)
-     VALUES (@id, @timetable_id, @day, @time_slot_id, @class_id, @subject_id, @teacher_id, @classroom_id, @created_at, @updated_at)`
+    `INSERT INTO lessons (id, timetable_id, day, time_slot_id, class_id, subject_id, teacher_id, classroom_id, batch, created_at, updated_at)
+     VALUES (@id, @timetable_id, @day, @time_slot_id, @class_id, @subject_id, @teacher_id, @classroom_id, @batch, @created_at, @updated_at)`
   );
 
   const insertMany = db.transaction((rows) => {
@@ -502,7 +774,8 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
     fitness: bestSolution.fitness,
     hardViolations: bestSolution.hardViolations,
     totalGaps: bestSolution.totalGaps,
+    parallelLabBonus: bestSolution.parallelLabBonus,
   };
 }
 
-module.exports = { generateTimetable };
+module.exports = { generateTimetable, getClassBatches };

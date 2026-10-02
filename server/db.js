@@ -198,6 +198,7 @@ CREATE TABLE IF NOT EXISTS lessons (
   subject_id TEXT REFERENCES subjects(id),
   teacher_id TEXT REFERENCES teachers(id),
   classroom_id TEXT REFERENCES classrooms(id),
+  batch TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -268,6 +269,12 @@ CREATE TABLE IF NOT EXISTS schedule_overrides (
   updated_at TEXT NOT NULL
 );
 `);
+
+try {
+  db.exec("ALTER TABLE lessons ADD COLUMN batch TEXT;");
+} catch {
+  // column already exists
+}
 
 // ---------------------------------------------------------------------------
 // Table metadata used by the generic REST layer (routes.js) so it knows how

@@ -27,3 +27,4 @@ server/data/*.db-wal
 *.njsproj
 *.sln
 *.sw?
+scratch/

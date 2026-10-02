@@ -92,6 +92,7 @@ export interface Lesson {
   classroom_id?: string;
   time_slot_id: string;
   day: number; // 0 for Monday, 1 for Tuesday, etc.
+  batch?: string;
 
   // Computed/compatibility fields
   classId?: string;

@@ -180,9 +180,15 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
             const otherClass = c2 ? classesById.get(c2)?.name : "another class";
             errors.push(`Teacher "${teacherObj?.name || "Teacher"}" is double-booked with ${otherClass} in this slot.`);
           }
-          // Double-booked class
+          // Double-booked class or batch
           if (c1 && c2 && c1 === c2) {
-            errors.push(`Class is double-booked with multiple lessons in the same time slot.`);
+            const b1 = l1.batch;
+            const b2 = l2.batch;
+            if (!b1 || !b2) {
+              errors.push(`Class is double-booked with multiple whole-class lessons in the same time slot.`);
+            } else if (b1 === b2) {
+              errors.push(`Batch "${b1}" is double-booked with multiple sessions in the same time slot.`);
+            }
           }
           // Double-booked classroom
           if (r1 && r2 && r1 === r2) {
@@ -325,8 +331,13 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                     </div>
                   )}
 
-                  <div className="font-semibold text-foreground">
-                    {getClassName(lesson.classId || lesson.class_id)}
+                  <div className="font-semibold text-foreground flex items-center justify-between gap-1">
+                    <span className="truncate">{getClassName(lesson.classId || lesson.class_id)}</span>
+                    {lesson.batch && (
+                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-300/80 shrink-0">
+                        {lesson.batch}
+                      </span>
+                    )}
                   </div>
                   <div className="text-foreground/90">
                     {getSubjectName(lesson.subjectId || lesson.subject_id)}
