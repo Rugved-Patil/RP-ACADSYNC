@@ -28,6 +28,14 @@ function randomChoice(arr) {
 }
 
 function getClassBatches(cls) {
+  if (cls.batches) {
+    try {
+      const parsed = typeof cls.batches === "string" ? JSON.parse(cls.batches) : cls.batches;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((b) => (typeof b === "object" && b.name ? b.name : String(b)));
+      }
+    } catch {}
+  }
   const count = cls.student_count || cls.capacity || 60;
   if (count <= 25) return ["Batch A"];
   if (count <= 45) return ["Batch A", "Batch B"];
@@ -35,7 +43,7 @@ function getClassBatches(cls) {
 }
 
 function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40, maxGenerations = 80 }) {
-  const classes = db.prepare("SELECT * FROM classes").all();
+  const classes = db.prepare("SELECT * FROM classes").all().map((c) => fromRow("classes", c));
   const subjects = db.prepare("SELECT * FROM subjects").all().map((s) => fromRow("subjects", s));
   const teachers = db.prepare("SELECT * FROM teachers").all();
   const classrooms = db.prepare("SELECT * FROM classrooms").all().map((c) => fromRow("classrooms", c));
@@ -87,12 +95,22 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
 
   // Pre-index lookups
   const classDefaultRoom = new Map(classroomAssignments.map((a) => [a.class_id, a.classroom_id]));
-  const teachersBySubject = new Map();
-  for (const s of subjects) {
-    const qualified = teachers.filter((t) =>
-      teacherSubjects.some((ts) => ts.teacher_id === t.id && ts.subject_id === s.id)
-    );
-    teachersBySubject.set(s.id, qualified.length > 0 ? qualified : teachers);
+  
+  // Specific teacher assignments per Class & Subject
+  const teachersBySubjectAndClass = new Map();
+  for (const cls of classes) {
+    for (const s of subjects) {
+      const key = `${cls.id}_${s.id}`;
+      let qualified = teachers.filter((t) =>
+        teacherSubjects.some((ts) => ts.teacher_id === t.id && ts.subject_id === s.id && ts.class_id === cls.id)
+      );
+      if (qualified.length === 0) {
+        qualified = teachers.filter((t) =>
+          teacherSubjects.some((ts) => ts.teacher_id === t.id && ts.subject_id === s.id && (!ts.class_id || ts.class_id === cls.id))
+        );
+      }
+      teachersBySubjectAndClass.set(key, qualified.length > 0 ? qualified : teachers);
+    }
   }
 
   const labRooms = classrooms.filter((r) => !!r.is_lab);
@@ -110,22 +128,26 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
     for (const subject of classSubjects) {
       const isLab = !!subject.is_lab;
       const labDuration = isLab && (subject.lab_duration_hours === 2 || !subject.lab_duration_hours) ? 2 : 1;
+      const credits = subject.credits || (isLab ? 1 : (subject.periods_per_week || 3));
 
       if (isLab) {
-        // Multi-hour batch lab: each batch of students takes this lab session
+        // Multi-hour batch lab: 1 credit = 1 2-hour session per week per batch
+        const sessions = credits || 1;
         for (const batch of batches) {
-          lessonUnits.push({
-            unitId: `${cls.id}_${subject.id}_${batch}`,
-            class_id: cls.id,
-            subject_id: subject.id,
-            batch: batch,
-            is_lab: true,
-            duration: labDuration,
-          });
+          for (let sIdx = 0; sIdx < sessions; sIdx++) {
+            lessonUnits.push({
+              unitId: `${cls.id}_${subject.id}_${batch}_${sIdx}`,
+              class_id: cls.id,
+              subject_id: subject.id,
+              batch: batch,
+              is_lab: true,
+              duration: labDuration,
+            });
+          }
         }
       } else {
-        // Whole-class theory lecture (all batches attend together)
-        const periodsRequired = subject.periods_per_week || 3;
+        // Whole-class theory lecture: credits = number of 1-hour lectures per week
+        const periodsRequired = credits || subject.periods_per_week || 3;
         for (let p = 0; p < periodsRequired; p++) {
           lessonUnits.push({
             unitId: `${cls.id}_${subject.id}_theory_${p}`,
@@ -147,7 +169,7 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
   // Generate a random gene placement for a lesson unit
   function generateRandomGene(unit) {
     const day = randomChoice(workingDays);
-    const eligibleTeachers = teachersBySubject.get(unit.subject_id) || teachers;
+    const eligibleTeachers = teachersBySubjectAndClass.get(`${unit.class_id}_${unit.subject_id}`) || teachers;
     const teacher = randomChoice(eligibleTeachers);
 
     let slots;
@@ -255,9 +277,9 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
           if (unitIdx === undefined) continue;
           const unit = lessonUnits[unitIdx];
 
-          const eligibleTeachers = (teachersBySubject.get(unit.subject_id) || teachers).sort(
-            () => Math.random() - 0.5
-          );
+          const eligibleTeachers = (
+            teachersBySubjectAndClass.get(`${unit.class_id}_${unit.subject_id}`) || teachers
+          ).sort(() => Math.random() - 0.5);
           let assignedTeacher = eligibleTeachers[0];
           for (const t of eligibleTeachers) {
             const curCount = teacherDayCounts.get(`${t.id}:${chosenDay}`) || 0;
@@ -303,9 +325,9 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
     // Schedule whole-class theory units
     for (const idx of theoryIndices) {
       const unit = lessonUnits[idx];
-      const eligibleTeachers = (teachersBySubject.get(unit.subject_id) || teachers).sort(
-        () => Math.random() - 0.5
-      );
+      const eligibleTeachers = (
+        teachersBySubjectAndClass.get(`${unit.class_id}_${unit.subject_id}`) || teachers
+      ).sort(() => Math.random() - 0.5);
       const defRoomId = classDefaultRoom.get(unit.class_id);
       const defRoom = classrooms.find((r) => r.id === defRoomId);
       const candidateRooms = defRoom ? [defRoom, ...theoryRooms] : theoryRooms;
@@ -665,7 +687,8 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
               ? consecutivePairs.map((p) => p.map((s) => s.id))
               : timeSlots.map((ts) => [ts.id]);
 
-          const eligibleTeachers = teachersBySubject.get(unit.subject_id) || teachers;
+          const eligibleTeachers =
+            teachersBySubjectAndClass.get(`${unit.class_id}_${unit.subject_id}`) || teachers;
           const candidateRooms = unit.is_lab
             ? labRooms
             : (classDefaultRoom.get(unit.class_id)

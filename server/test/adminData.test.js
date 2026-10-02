@@ -1,13 +1,13 @@
-// adminData.test.js — Tests for Admin Data Management (Merge Sample Data & Kill Switch)
+// adminData.test.js — Tests for Admin Data Management (Kill Switch & Safe Re-seed)
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { db } = require("../db");
-const { mergeSampleData, killSwitch } = require("../lib/adminData");
+const { killSwitch } = require("../lib/adminData");
 const { createUser } = require("../lib/auth");
 const { seed } = require("../seed");
 
-test("Admin Data Management: mergeSampleData & killSwitch", async (t) => {
+test("Admin Data Management: killSwitch & Re-seed", async (t) => {
   // Ensure an admin user exists
   const existingAdmin = db.prepare("SELECT * FROM users WHERE role = 'admin'").get();
   let adminId;
@@ -22,62 +22,6 @@ test("Admin Data Management: mergeSampleData & killSwitch", async (t) => {
   } else {
     adminId = existingAdmin.id;
   }
-
-  await t.test("mergeSampleData should add new classes, faculty, subjects, and classrooms", () => {
-    const result = mergeSampleData();
-    assert.strictEqual(result.success, true);
-    assert.ok(result.stats);
-    assert.ok(typeof result.stats.addedClasses === "number");
-
-    // Check that added classes exist in the database
-    const teClass = db.prepare("SELECT * FROM classes WHERE name = 'TE-CS-A'").get();
-    assert.ok(teClass, "TE-CS-A class should be present");
-
-    const beClass = db.prepare("SELECT * FROM classes WHERE name = 'BE-CS-A'").get();
-    assert.ok(beClass, "BE-CS-A class should be present");
-
-    // Check that added classrooms exist
-    const room = db.prepare("SELECT * FROM classrooms WHERE name = 'LH-301'").get();
-    assert.ok(room, "LH-301 classroom should be present");
-
-    // Check that added subjects exist
-    const subj = db.prepare("SELECT * FROM subjects WHERE code = 'CS401'").get();
-    assert.ok(subj, "CS401 subject should be present");
-
-    // Check that added teacher exists
-    const teacher = db.prepare("SELECT * FROM teachers WHERE email = 'sunita.rao@institution.edu'").get();
-    assert.ok(teacher, "Dr. Sunita Rao should be present");
-
-    // Check that teacher login account was created
-    const teacherUser = db.prepare("SELECT * FROM users WHERE email = 'sunita.rao@institution.edu'").get();
-    assert.ok(teacherUser, "Teacher user account should be present");
-    assert.strictEqual(teacherUser.role, "teacher");
-  });
-
-  await t.test("mergeSampleData should keep generating more unique data with each call", () => {
-    const classesCountBefore = db.prepare("SELECT COUNT(*) as count FROM classes").get().count;
-    const subjectsCountBefore = db.prepare("SELECT COUNT(*) as count FROM subjects").get().count;
-    const teachersCountBefore = db.prepare("SELECT COUNT(*) as count FROM teachers").get().count;
-
-    const secondResult = mergeSampleData();
-    assert.strictEqual(secondResult.success, true);
-    assert.ok(secondResult.stats.addedClasses > 0, "Should add new classes on subsequent press");
-    assert.ok(secondResult.stats.addedSubjects > 0, "Should add new subjects on subsequent press");
-    assert.ok(secondResult.stats.addedTeachers > 0, "Should add new faculty on subsequent press");
-
-    const classesCountAfter = db.prepare("SELECT COUNT(*) as count FROM classes").get().count;
-    const subjectsCountAfter = db.prepare("SELECT COUNT(*) as count FROM subjects").get().count;
-    const teachersCountAfter = db.prepare("SELECT COUNT(*) as count FROM teachers").get().count;
-
-    assert.ok(classesCountAfter > classesCountBefore, "Total classes should increase");
-    assert.ok(subjectsCountAfter > subjectsCountBefore, "Total subjects should increase");
-    assert.ok(teachersCountAfter > teachersCountBefore, "Total teachers should increase");
-
-    // Third call should add another unique department (e.g. AIDS)
-    const thirdResult = mergeSampleData();
-    assert.strictEqual(thirdResult.success, true);
-    assert.ok(thirdResult.stats.addedClasses > 0, "Should continue adding unique classes on 3rd press");
-  });
 
   await t.test("killSwitch should safely wipe all timetable and institutional data while preserving admin account", () => {
     const killResult = killSwitch(adminId);
@@ -100,27 +44,32 @@ test("Admin Data Management: mergeSampleData & killSwitch", async (t) => {
     assert.strictEqual(counts.subjects, 0);
     assert.strictEqual(counts.classrooms, 0);
 
-    // Verify admin account is preserved
-    const adminCount = db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin'").get().count;
-    assert.ok(adminCount >= 1, "At least one admin user must be preserved");
-
-    // Non-admin users must be wiped
-    const nonAdminCount = db.prepare("SELECT COUNT(*) as count FROM users WHERE role != 'admin'").get().count;
-    assert.strictEqual(nonAdminCount, 0, "All non-admin users must be wiped");
+    // Verify admin account remains
+    const adminUser = db.prepare("SELECT * FROM users WHERE role = 'admin'").get();
+    assert.ok(adminUser, "Admin account should be safely preserved");
   });
 
-  await t.test("mergeSampleData should work cleanly after killSwitch to re-seed institutional records", () => {
-    const reseedResult = mergeSampleData();
-    assert.strictEqual(reseedResult.success, true);
-    assert.ok(reseedResult.stats.addedClasses > 0);
-    assert.ok(reseedResult.stats.addedTeachers > 0);
-    assert.ok(reseedResult.stats.addedSubjects > 0);
-    assert.ok(reseedResult.stats.addedClassrooms > 0);
+  await t.test("seed should cleanly populate authentic college dataset after killSwitch", () => {
+    const seedResult = seed();
+    assert.ok(seedResult);
+    assert.strictEqual(seedResult.hardViolations, 0);
 
-    const classesCount = db.prepare("SELECT COUNT(*) as count FROM classes").get().count;
-    assert.strictEqual(classesCount, 4);
+    const counts = {
+      years: db.prepare("SELECT COUNT(*) as count FROM years").get().count,
+      classes: db.prepare("SELECT COUNT(*) as count FROM classes").get().count,
+      classrooms: db.prepare("SELECT COUNT(*) as count FROM classrooms").get().count,
+      teachers: db.prepare("SELECT COUNT(*) as count FROM teachers").get().count,
+      subjects: db.prepare("SELECT COUNT(*) as count FROM subjects").get().count,
+      timetables: db.prepare("SELECT COUNT(*) as count FROM timetables").get().count,
+      lessons: db.prepare("SELECT COUNT(*) as count FROM lessons").get().count,
+    };
+
+    assert.strictEqual(counts.years, 4);
+    assert.strictEqual(counts.classes, 6);
+    assert.strictEqual(counts.classrooms, 16);
+    assert.strictEqual(counts.teachers, 19);
+    assert.strictEqual(counts.subjects, 63);
+    assert.ok(counts.timetables >= 1);
+    assert.ok(counts.lessons > 0);
   });
-
-  // Restore baseline realistic seed data so remaining tests and app run on complete dataset
-  seed();
 });

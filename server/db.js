@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS classes (
   year_id TEXT REFERENCES years(id) ON DELETE SET NULL,
   capacity INTEGER DEFAULT 30,
   student_count INTEGER DEFAULT 0,
+  batches TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -103,7 +104,8 @@ CREATE TABLE IF NOT EXISTS subjects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   code TEXT NOT NULL UNIQUE,
-  periods_per_week INTEGER DEFAULT 1,
+  credits INTEGER DEFAULT 3,
+  periods_per_week INTEGER DEFAULT 3,
   is_lab INTEGER DEFAULT 0,
   lab_duration_hours INTEGER DEFAULT 1,
   created_at TEXT NOT NULL,
@@ -163,6 +165,7 @@ CREATE TABLE IF NOT EXISTS teacher_subject_assignments (
   id TEXT PRIMARY KEY,
   teacher_id TEXT REFERENCES teachers(id) ON DELETE CASCADE,
   subject_id TEXT REFERENCES subjects(id) ON DELETE CASCADE,
+  class_id TEXT REFERENCES classes(id) ON DELETE CASCADE,
   created_at TEXT NOT NULL
 );
 
@@ -271,10 +274,20 @@ CREATE TABLE IF NOT EXISTS schedule_overrides (
 `);
 
 try {
+  db.exec("ALTER TABLE classes ADD COLUMN batches TEXT;");
+} catch {}
+
+try {
+  db.exec("ALTER TABLE subjects ADD COLUMN credits INTEGER DEFAULT 3;");
+} catch {}
+
+try {
+  db.exec("ALTER TABLE teacher_subject_assignments ADD COLUMN class_id TEXT REFERENCES classes(id) ON DELETE CASCADE;");
+} catch {}
+
+try {
   db.exec("ALTER TABLE lessons ADD COLUMN batch TEXT;");
-} catch {
-  // column already exists
-}
+} catch {}
 
 // ---------------------------------------------------------------------------
 // Table metadata used by the generic REST layer (routes.js) so it knows how
@@ -282,7 +295,7 @@ try {
 // ---------------------------------------------------------------------------
 const TABLES = {
   years: { boolCols: [], jsonCols: [] },
-  classes: { boolCols: [], jsonCols: [] },
+  classes: { boolCols: [], jsonCols: ["batches"] },
   subjects: { boolCols: ["is_lab"], jsonCols: [] },
   teachers: { boolCols: [], jsonCols: [] },
   classrooms: { boolCols: ["is_lab"], jsonCols: [] },

@@ -254,11 +254,13 @@ const DataUpload = () => {
                   <th className="p-2.5">Code</th>
                   <th className="p-2.5">Year / Dept</th>
                   <th className="p-2.5">Capacity</th>
+                  <th className="p-2.5">Credits</th>
                   <th className="p-2.5">Periods/Wk</th>
                   <th className="p-2.5">Is_Lab</th>
                   <th className="p-2.5">Duration</th>
                   <th className="p-2.5">Classes</th>
                   <th className="p-2.5">Teachers</th>
+                  <th className="p-2.5">Batches</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -269,10 +271,12 @@ const DataUpload = () => {
                   <td className="p-2.5">Second Year</td>
                   <td className="p-2.5">60</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
+                  <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5">No</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
+                  <td className="p-2.5 text-indigo-600 font-semibold">Batch A: 20, Batch B: 20, Batch C: 19</td>
                 </tr>
                 <tr className="hover:bg-muted/20 font-mono">
                   <td className="p-2.5 font-bold text-emerald-600">CLASSROOM</td>
@@ -281,7 +285,9 @@ const DataUpload = () => {
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5">35</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
+                  <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 font-bold text-emerald-600">Yes</td>
+                  <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
@@ -293,7 +299,9 @@ const DataUpload = () => {
                   <td className="p-2.5">Networks</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
+                  <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5">No</td>
+                  <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
@@ -304,11 +312,13 @@ const DataUpload = () => {
                   <td className="p-2.5">EC201</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
+                  <td className="p-2.5 font-bold text-purple-600">2</td>
                   <td className="p-2.5">2</td>
                   <td className="p-2.5">No</td>
                   <td className="p-2.5">1</td>
                   <td className="p-2.5 font-semibold text-foreground">SE-ECCE</td>
                   <td className="p-2.5 font-semibold text-foreground">Prof. M. A. Mulay</td>
+                  <td className="p-2.5 text-muted-foreground">-</td>
                 </tr>
                 <tr className="hover:bg-muted/20 font-mono bg-orange-50/30 dark:bg-orange-950/20">
                   <td className="p-2.5 font-bold text-orange-600">SUBJECT</td>
@@ -316,11 +326,13 @@ const DataUpload = () => {
                   <td className="p-2.5">EC201L</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
                   <td className="p-2.5 text-muted-foreground">-</td>
+                  <td className="p-2.5 font-bold text-orange-600">1</td>
                   <td className="p-2.5">2</td>
                   <td className="p-2.5 font-bold text-orange-600">Yes</td>
                   <td className="p-2.5 font-bold text-orange-600">2 (Consecutive)</td>
                   <td className="p-2.5 font-semibold text-foreground">SE-ECCE</td>
                   <td className="p-2.5 font-semibold text-foreground">Prof. M. A. Mulay</td>
+                  <td className="p-2.5 text-muted-foreground">-</td>
                 </tr>
               </tbody>
             </table>

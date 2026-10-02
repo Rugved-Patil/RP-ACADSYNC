@@ -1,105 +1,105 @@
-Record_Type,Name,Code,Year,Capacity,Periods_Per_Week,Is_Lab,Lab_Duration_Hours,Email,Specialization,Location,Equipment,Classes,Teachers
-CLASS,SE-ECCE,,Second Year (SE),60,,No,1,,,,,,
-CLASS,SE-AIDS,,Second Year (SE),60,,No,1,,,,,,
-CLASS,TY-ECCE,,Third Year (TY),60,,No,1,,,,,,
-CLASS,TY-AIDS,,Third Year (TY),60,,No,1,,,,,,
-CLASS,B.Tech-ECCE,,Final Year (B.Tech),60,,No,1,,,,,,
-CLASS,B.Tech-AIDS,,Final Year (B.Tech),60,,No,1,,,,,,
-CLASSROOM,SF-31,,,70,,No,,,,Second Floor SF-31,"Projector, Audio System, Smart Board",,
-CLASSROOM,SF-32,,,70,,No,,,,Second Floor SF-32,"Projector, Audio System",,
-CLASSROOM,SF-33,,,70,,No,,,,Second Floor SF-33,"Projector, Audio System, Smart Board",,
-CLASSROOM,TF-31,,,70,,No,,,,Third Floor TF-31,"Projector, Audio System",,
-CLASSROOM,TF-32,,,70,,No,,,,Third Floor TF-32,"Projector, Audio System",,
-CLASSROOM,FF-22,,,60,,No,,,,First Floor FF-22,Projector,,
-CLASSROOM,Jack Kilby Hall,,,120,,No,,,,Ground Floor,"Podium, Dual Projectors, Sound System",,
-CLASSROOM,System Software Lab (FF-21),,,35,,Yes,,,,First Floor FF-21,"35 High-End Linux Workstations, GCC/GDB",,
-CLASSROOM,Programming Lab-1 (FF-28),,,35,,Yes,,,,First Floor FF-28,"35 Systems, Oracle/MySQL, Java/Python",,
-CLASSROOM,Programming Lab-2 (FF-28),,,35,,Yes,,,,First Floor FF-28,"35 Systems, Network Simulator, Wireshark",,
-CLASSROOM,Analog Circuit Lab (FF-33),,,35,,Yes,,,,First Floor FF-33,"DSO, Function Generators, Multimeters, Breadboards",,
-CLASSROOM,EDC Lab (FF-34),,,35,,Yes,,,,First Floor FF-34,"Semiconductor Kits, CRO, Power Supplies",,
-CLASSROOM,Communication Lab (FF-36),,,35,,Yes,,,,First Floor FF-36,"RF Modulators, Optical Fiber Trainers",,
-CLASSROOM,DMP Lab (FF-38),,,35,,Yes,,,,First Floor FF-38,"Microprocessor & 8051 Kits, FPGA Boards",,
-CLASSROOM,Data Science Lab-II (FF-40),,,35,,Yes,,,,First Floor FF-40,"GPU Systems, Jupyter Notebooks, Node.js",,
-CLASSROOM,Electronic Workshop Lab (FF-30),,,35,,Yes,,,,First Floor FF-30,"PCB Milling, Soldering Stations, Basic Electrical",,
-TEACHER,Dr. S. N. Pawar,,,,,No,,snpawar@jnec.ac.in,Computer Networks & Wireless Communication,,,,
-TEACHER,Prof. F. I. Shaikh,,,,,No,,fishaikh@jnec.ac.in,Electronic Devices & Digital Image Processing,,,,
-TEACHER,Dr. V. B. Malode,,,,,No,,vbmalode@jnec.ac.in,Data Structures & CMOS Design,,,,
-TEACHER,Dr. V. A. More,,,,,No,,vamore@jnec.ac.in,Analog Circuits & Electrical Engineering,,,,
-TEACHER,Prof. V. A. Kulkarni,,,,,No,,vakulkarni@jnec.ac.in,Digital System Design & Embedded Systems,,,,
-TEACHER,Prof. S. A. Annadate,,,,,No,,saannadate@jnec.ac.in,Software Engineering & Image Processing,,,,
-TEACHER,Prof. G. R. Basole,,,,,No,,grbasole@jnec.ac.in,Automotive Electronics & Community Engagement,,,,
-TEACHER,Prof. A. P. Phatale,,,,,No,,apphatale@jnec.ac.in,Operating Systems & Databases,,,,
-TEACHER,Prof. A. R. Salunke,,,,,No,,arsalunke@jnec.ac.in,Computer Networks & Network Security,,,,
-TEACHER,Dr. C. S. Khandelwal,,,,,No,,cskhandelwal@jnec.ac.in,Database Management & Data Analytics,,,,
-TEACHER,Prof. S. D. Jadhav,,,,,No,,sdjadhav@jnec.ac.in,"Probability & Statistics, Business Management",,,,
-TEACHER,Prof. M. A. Mulay,,,,,No,,mamulay@jnec.ac.in,Digital Systems & Analog Circuits,,,,
-TEACHER,Dr. S. D. Gavarskar,,,,,No,,sdgavarskar@jnec.ac.in,Data Structures & Algorithms,,,,
-TEACHER,Prof. M. K. Pawar,,,,,No,,mkpawar@jnec.ac.in,Data Science & Web Development,,,,
-TEACHER,Prof. P. B. Murmude,,,,,No,,pbmurmude@jnec.ac.in,Web Development Framework & IoT,,,,
-TEACHER,Prof. A. G. Patil,,,,,No,,agpatil@jnec.ac.in,Specialized Honors & Systems,,,,
-TEACHER,Prof. P. P. Patil,,,,,No,,pppatil@jnec.ac.in,Natural Language Processing & AI,,,,
-TEACHER,Prof. V. J. Lipne,,,,,No,,vjlipne@jnec.ac.in,Artificial Intelligence & Industry Projects,,,,
-TEACHER,Prof. R. L. Mudbe,,,,,No,,rlmudbe@jnec.ac.in,Engineering Exploration & NCC,,,,
-SUBJECT,Digital System Design (DSD),EC201,,,2,No,1,,,,,SE-ECCE,"Prof. M. A. Mulay, Prof. V. A. Kulkarni"
-SUBJECT,DSD Lab,EC201L,,,2,Yes,2,,,,,SE-ECCE,Prof. M. A. Mulay
-SUBJECT,Data Structures (DS),EC202,,,2,No,1,,,,,SE-ECCE,"Dr. V. B. Malode, Dr. S. D. Gavarskar"
-SUBJECT,DS Lab,EC202L,,,2,Yes,2,,,,,SE-ECCE,"Dr. V. B. Malode, Dr. S. D. Gavarskar"
-SUBJECT,Electronic Circuits & Network Theory (EC&NT),EC203,,,2,No,1,,,,,SE-ECCE,"Dr. V. B. Malode, Prof. F. I. Shaikh"
-SUBJECT,EC&NT Lab,EC203L,,,2,Yes,2,,,,,SE-ECCE,Prof. F. I. Shaikh
-SUBJECT,Business Management & Financial Accounting (BMFA),EC204,,,2,No,1,,,,,SE-ECCE,Prof. S. D. Jadhav
-SUBJECT,Community Engagement,EC205L,,,2,Yes,2,,,,,SE-ECCE,Prof. G. R. Basole
-SUBJECT,Multidisciplinary Minor (MDM),EC206,,,2,No,1,,,,,SE-ECCE,Dr. S. D. Gavarskar
-SUBJECT,Constitution of India,EC207,,,2,No,1,,,,,SE-ECCE,Prof. G. R. Basole
-SUBJECT,Digital Systems & Microprocessors (DS&MP),AI201,,,2,No,1,,,,,SE-AIDS,Prof. V. A. Kulkarni
-SUBJECT,DS&MP Lab,AI201L,,,2,Yes,2,,,,,SE-AIDS,Prof. V. A. Kulkarni
-SUBJECT,Data Structures (AIDS),AI202,,,2,No,1,,,,,SE-AIDS,"Dr. S. D. Gavarskar, Dr. V. B. Malode"
-SUBJECT,DS Lab (AIDS),AI202L,,,2,Yes,2,,,,,SE-AIDS,"Dr. S. D. Gavarskar, Dr. V. B. Malode"
-SUBJECT,Probability & Random Processes (PB&RP),AI203,,,2,No,1,,,,,SE-AIDS,Prof. S. D. Jadhav
-SUBJECT,Web Development Lab (SE),AI204L,,,2,Yes,2,,,,,SE-AIDS,Prof. M. K. Pawar
-SUBJECT,BM&FA (AIDS),AI205,,,2,No,1,,,,,SE-AIDS,Prof. S. D. Jadhav
-SUBJECT,Community Engagement (AIDS),AI206L,,,2,Yes,2,,,,,SE-AIDS,Prof. G. R. Basole
-SUBJECT,MDM (AIDS),AI207,,,2,No,1,,,,,SE-AIDS,Dr. C. S. Khandelwal
-SUBJECT,Constitution of India (AIDS),AI208,,,2,No,1,,,,,SE-AIDS,Prof. G. R. Basole
-SUBJECT,Computer Networks (ECCE),EC301,,,3,No,1,,,,,TY-ECCE,"Prof. A. R. Salunke, Dr. S. N. Pawar"
-SUBJECT,CN Lab (ECCE),EC301L,,,2,Yes,2,,,,,TY-ECCE,Prof. A. R. Salunke
-SUBJECT,Operating Systems (ECCE),EC302,,,3,No,1,,,,,TY-ECCE,Prof. A. P. Phatale
-SUBJECT,OS Lab (ECCE),EC302L,,,2,Yes,2,,,,,TY-ECCE,Prof. A. P. Phatale
-SUBJECT,Database Management Systems (ECCE),EC303,,,3,No,1,,,,,TY-ECCE,"Dr. C. S. Khandelwal, Prof. A. P. Phatale"
-SUBJECT,DBMS Lab (ECCE),EC303L,,,2,Yes,2,,,,,TY-ECCE,Dr. C. S. Khandelwal
-SUBJECT,Analog Communication (AC),EC304,,,3,No,1,,,,,TY-ECCE,"Prof. M. A. Mulay, Dr. V. A. More"
-SUBJECT,AC Lab,EC304L,,,2,Yes,2,,,,,TY-ECCE,Prof. M. A. Mulay
-SUBJECT,PE-I (IoT),EC305,,,3,No,1,,,,,TY-ECCE,"Prof. F. I. Shaikh, Prof. P. B. Murmude"
-SUBJECT,IoT Lab,EC305L,,,2,Yes,2,,,,,TY-ECCE,Prof. P. B. Murmude
-SUBJECT,MDM (TY-ECCE),EC306,,,2,No,1,,,,,TY-ECCE,Prof. P. B. Murmude
-SUBJECT,Computer Networks (TY-AIDS),AI301,,,3,No,1,,,,,TY-AIDS,"Prof. A. R. Salunke, Dr. S. N. Pawar"
-SUBJECT,CN Lab (TY-AIDS),AI301L,,,2,Yes,2,,,,,TY-AIDS,Prof. A. R. Salunke
-SUBJECT,Operating Systems (TY-AIDS),AI302,,,3,No,1,,,,,TY-AIDS,Prof. A. P. Phatale
-SUBJECT,OS Lab (TY-AIDS),AI302L,,,2,Yes,2,,,,,TY-AIDS,Prof. A. P. Phatale
-SUBJECT,DBMS (TY-AIDS),AI303,,,3,No,1,,,,,TY-AIDS,Dr. C. S. Khandelwal
-SUBJECT,DBMS Lab (TY-AIDS),AI303L,,,2,Yes,2,,,,,TY-AIDS,Dr. C. S. Khandelwal
-SUBJECT,Data Science (TY-AIDS),AI304,,,3,No,1,,,,,TY-AIDS,Prof. M. K. Pawar
-SUBJECT,DS Lab (TY-AIDS),AI304L,,,2,Yes,2,,,,,TY-AIDS,Prof. M. K. Pawar
-SUBJECT,PE-I (TY-AIDS),AI305,,,3,No,1,,,,,TY-AIDS,Prof. V. A. Kulkarni
-SUBJECT,MDM (TY-AIDS),AI306,,,2,No,1,,,,,TY-AIDS,Dr. S. D. Gavarskar
-SUBJECT,Digital Signal Processing (DSP),EC401,,,3,No,1,,,,,B.Tech-ECCE,"Prof. F. I. Shaikh, Prof. M. A. Mulay"
-SUBJECT,DSP Lab,EC401L,,,2,Yes,2,,,,,B.Tech-ECCE,Prof. F. I. Shaikh
-SUBJECT,Computer Networks (B.Tech-ECCE),EC402,,,3,No,1,,,,,B.Tech-ECCE,"Dr. S. N. Pawar, Prof. S. D. Jadhav"
-SUBJECT,CN Lab (B.Tech-ECCE),EC402L,,,2,Yes,2,,,,,B.Tech-ECCE,Prof. S. D. Jadhav
-SUBJECT,Software Engineering (ECCE),EC403,,,3,No,1,,,,,B.Tech-ECCE,Prof. S. A. Annadate
-SUBJECT,Software Engineering Lab (ECCE),EC403L,,,2,Yes,2,,,,,B.Tech-ECCE,Prof. S. A. Annadate
-SUBJECT,PE-III (DIP),EC404,,,3,No,1,,,,,B.Tech-ECCE,"Prof. F. I. Shaikh, Prof. S. A. Annadate"
-SUBJECT,DIP Lab,EC404L,,,2,Yes,2,,,,,B.Tech-ECCE,Prof. S. A. Annadate
-SUBJECT,PE-IV (AI),EC405,,,3,No,1,,,,,B.Tech-ECCE,Prof. V. J. Lipne
-SUBJECT,AI Lab (ECCE),EC405L,,,2,Yes,2,,,,,B.Tech-ECCE,Prof. V. J. Lipne
-SUBJECT,Business Management (ECCE),EC406,,,2,No,1,,,,,B.Tech-ECCE,Prof. S. D. Jadhav
-SUBJECT,Natural Language Processing (NLP),AI401,,,3,No,1,,,,,B.Tech-AIDS,Prof. P. P. Patil
-SUBJECT,NLP Lab,AI401L,,,2,Yes,2,,,,,B.Tech-AIDS,Prof. P. P. Patil
-SUBJECT,Computer Networks (B.Tech-AIDS),AI402,,,3,No,1,,,,,B.Tech-AIDS,"Dr. S. N. Pawar, Prof. A. R. Salunke"
-SUBJECT,CN Lab (B.Tech-AIDS),AI402L,,,2,Yes,2,,,,,B.Tech-AIDS,Prof. A. R. Salunke
-SUBJECT,Software Engineering (AIDS),AI403,,,3,No,1,,,,,B.Tech-AIDS,Prof. S. A. Annadate
-SUBJECT,Software Engineering Lab (AIDS),AI403L,,,2,Yes,2,,,,,B.Tech-AIDS,Prof. S. A. Annadate
-SUBJECT,Web Development (AIDS),AI404,,,3,No,1,,,,,B.Tech-AIDS,"Prof. M. K. Pawar, Prof. P. B. Murmude"
-SUBJECT,Web Development Lab (AIDS),AI404L,,,2,Yes,2,,,,,B.Tech-AIDS,Prof. M. K. Pawar
-SUBJECT,PE-III (AIDS),AI405,,,3,No,1,,,,,B.Tech-AIDS,"Prof. V. J. Lipne, Prof. P. P. Patil"
-SUBJECT,PE-III Lab (AIDS),AI405L,,,2,Yes,2,,,,,B.Tech-AIDS,Prof. V. J. Lipne
-SUBJECT,Business Management (AIDS),AI406,,,2,No,1,,,,,B.Tech-AIDS,Prof. S. D. Jadhav
+Record_Type,Name,Code,Year,Capacity,Credits,Periods_Per_Week,Is_Lab,Lab_Duration_Hours,Email,Specialization,Location,Equipment,Classes,Teachers,Batches
+CLASS,SE-ECCE,,Second Year (SE),60,,,No,1,,,,,,,"Batch A: 20, Batch B: 20, Batch C: 19"
+CLASS,SE-AIDS,,Second Year (SE),60,,,No,1,,,,,,,"Batch A: 20, Batch B: 20, Batch C: 19"
+CLASS,TY-ECCE,,Third Year (TY),60,,,No,1,,,,,,,"Batch A: 20, Batch B: 20, Batch C: 19"
+CLASS,TY-AIDS,,Third Year (TY),60,,,No,1,,,,,,,"Batch A: 20, Batch B: 20, Batch C: 19"
+CLASS,B.Tech-ECCE,,Final Year (B.Tech),60,,,No,1,,,,,,,"Batch A: 20, Batch B: 20, Batch C: 19"
+CLASS,B.Tech-AIDS,,Final Year (B.Tech),60,,,No,1,,,,,,,"Batch A: 20, Batch B: 20, Batch C: 19"
+CLASSROOM,SF-31,,,70,,,No,,,,Second Floor SF-31,"Projector, Audio System, Smart Board",,,
+CLASSROOM,SF-32,,,70,,,No,,,,Second Floor SF-32,"Projector, Audio System",,,
+CLASSROOM,SF-33,,,70,,,No,,,,Second Floor SF-33,"Projector, Audio System, Smart Board",,,
+CLASSROOM,TF-31,,,70,,,No,,,,Third Floor TF-31,"Projector, Audio System",,,
+CLASSROOM,TF-32,,,70,,,No,,,,Third Floor TF-32,"Projector, Audio System",,,
+CLASSROOM,FF-22,,,60,,,No,,,,First Floor FF-22,Projector,,,
+CLASSROOM,Jack Kilby Hall,,,120,,,No,,,,Ground Floor,"Podium, Dual Projectors, Sound System",,,
+CLASSROOM,System Software Lab (FF-21),,,35,,,Yes,,,,First Floor FF-21,"35 High-End Linux Workstations, GCC/GDB",,,
+CLASSROOM,Programming Lab-1 (FF-28),,,35,,,Yes,,,,First Floor FF-28,"35 Systems, Oracle/MySQL, Java/Python",,,
+CLASSROOM,Programming Lab-2 (FF-28),,,35,,,Yes,,,,First Floor FF-28,"35 Systems, Network Simulator, Wireshark",,,
+CLASSROOM,Analog Circuit Lab (FF-33),,,35,,,Yes,,,,First Floor FF-33,"DSO, Function Generators, Multimeters, Breadboards",,,
+CLASSROOM,EDC Lab (FF-34),,,35,,,Yes,,,,First Floor FF-34,"Semiconductor Kits, CRO, Power Supplies",,,
+CLASSROOM,Communication Lab (FF-36),,,35,,,Yes,,,,First Floor FF-36,"RF Modulators, Optical Fiber Trainers",,,
+CLASSROOM,DMP Lab (FF-38),,,35,,,Yes,,,,First Floor FF-38,"Microprocessor & 8051 Kits, FPGA Boards",,,
+CLASSROOM,Data Science Lab-II (FF-40),,,35,,,Yes,,,,First Floor FF-40,"GPU Systems, Jupyter Notebooks, Node.js",,,
+CLASSROOM,Electronic Workshop Lab (FF-30),,,35,,,Yes,,,,First Floor FF-30,"PCB Milling, Soldering Stations, Basic Electrical",,,
+TEACHER,Dr. S. N. Pawar,,,,,,No,,snpawar@jnec.ac.in,Computer Networks & Wireless Communication,,,,,
+TEACHER,Prof. F. I. Shaikh,,,,,,No,,fishaikh@jnec.ac.in,Electronic Devices & Digital Image Processing,,,,,
+TEACHER,Dr. V. B. Malode,,,,,,No,,vbmalode@jnec.ac.in,Data Structures & CMOS Design,,,,,
+TEACHER,Dr. V. A. More,,,,,,No,,vamore@jnec.ac.in,Analog Circuits & Electrical Engineering,,,,,
+TEACHER,Prof. V. A. Kulkarni,,,,,,No,,vakulkarni@jnec.ac.in,Digital System Design & Embedded Systems,,,,,
+TEACHER,Prof. S. A. Annadate,,,,,,No,,saannadate@jnec.ac.in,Software Engineering & Image Processing,,,,,
+TEACHER,Prof. G. R. Basole,,,,,,No,,grbasole@jnec.ac.in,Automotive Electronics & Community Engagement,,,,,
+TEACHER,Prof. A. P. Phatale,,,,,,No,,apphatale@jnec.ac.in,Operating Systems & Databases,,,,,
+TEACHER,Prof. A. R. Salunke,,,,,,No,,arsalunke@jnec.ac.in,Computer Networks & Network Security,,,,,
+TEACHER,Dr. C. S. Khandelwal,,,,,,No,,cskhandelwal@jnec.ac.in,Database Management & Data Analytics,,,,,
+TEACHER,Prof. S. D. Jadhav,,,,,,No,,sdjadhav@jnec.ac.in,"Probability & Statistics, Business Management",,,,,
+TEACHER,Prof. M. A. Mulay,,,,,,No,,mamulay@jnec.ac.in,Digital Systems & Analog Circuits,,,,,
+TEACHER,Dr. S. D. Gavarskar,,,,,,No,,sdgavarskar@jnec.ac.in,Data Structures & Algorithms,,,,,
+TEACHER,Prof. M. K. Pawar,,,,,,No,,mkpawar@jnec.ac.in,Data Science & Web Development,,,,,
+TEACHER,Prof. P. B. Murmude,,,,,,No,,pbmurmude@jnec.ac.in,Web Development Framework & IoT,,,,,
+TEACHER,Prof. A. G. Patil,,,,,,No,,agpatil@jnec.ac.in,Specialized Honors & Systems,,,,,
+TEACHER,Prof. P. P. Patil,,,,,,No,,pppatil@jnec.ac.in,Natural Language Processing & AI,,,,,
+TEACHER,Prof. V. J. Lipne,,,,,,No,,vjlipne@jnec.ac.in,Artificial Intelligence & Industry Projects,,,,,
+TEACHER,Prof. R. L. Mudbe,,,,,,No,,rlmudbe@jnec.ac.in,Engineering Exploration & NCC,,,,,
+SUBJECT,Digital System Design (DSD),EC201,,,2,2,No,1,,,,,SE-ECCE,"Prof. M. A. Mulay, Prof. V. A. Kulkarni",
+SUBJECT,DSD Lab,EC201L,,,2,2,Yes,2,,,,,SE-ECCE,Prof. M. A. Mulay,
+SUBJECT,Data Structures (DS),EC202,,,2,2,No,1,,,,,SE-ECCE,"Dr. V. B. Malode, Dr. S. D. Gavarskar",
+SUBJECT,DS Lab,EC202L,,,2,2,Yes,2,,,,,SE-ECCE,"Dr. V. B. Malode, Dr. S. D. Gavarskar",
+SUBJECT,Electronic Circuits & Network Theory (EC&NT),EC203,,,2,2,No,1,,,,,SE-ECCE,"Dr. V. B. Malode, Prof. F. I. Shaikh",
+SUBJECT,EC&NT Lab,EC203L,,,2,2,Yes,2,,,,,SE-ECCE,Prof. F. I. Shaikh,
+SUBJECT,Business Management & Financial Accounting (BMFA),EC204,,,2,2,No,1,,,,,SE-ECCE,Prof. S. D. Jadhav,
+SUBJECT,Community Engagement,EC205L,,,2,2,Yes,2,,,,,SE-ECCE,Prof. G. R. Basole,
+SUBJECT,Multidisciplinary Minor (MDM),EC206,,,2,2,No,1,,,,,SE-ECCE,Dr. S. D. Gavarskar,
+SUBJECT,Constitution of India,EC207,,,2,2,No,1,,,,,SE-ECCE,Prof. G. R. Basole,
+SUBJECT,Digital Systems & Microprocessors (DS&MP),AI201,,,2,2,No,1,,,,,SE-AIDS,Prof. V. A. Kulkarni,
+SUBJECT,DS&MP Lab,AI201L,,,2,2,Yes,2,,,,,SE-AIDS,Prof. V. A. Kulkarni,
+SUBJECT,Data Structures (AIDS),AI202,,,2,2,No,1,,,,,SE-AIDS,"Dr. S. D. Gavarskar, Dr. V. B. Malode",
+SUBJECT,DS Lab (AIDS),AI202L,,,2,2,Yes,2,,,,,SE-AIDS,"Dr. S. D. Gavarskar, Dr. V. B. Malode",
+SUBJECT,Probability & Random Processes (PB&RP),AI203,,,2,2,No,1,,,,,SE-AIDS,Prof. S. D. Jadhav,
+SUBJECT,Web Development Lab (SE),AI204L,,,2,2,Yes,2,,,,,SE-AIDS,Prof. M. K. Pawar,
+SUBJECT,BM&FA (AIDS),AI205,,,2,2,No,1,,,,,SE-AIDS,Prof. S. D. Jadhav,
+SUBJECT,Community Engagement (AIDS),AI206L,,,2,2,Yes,2,,,,,SE-AIDS,Prof. G. R. Basole,
+SUBJECT,MDM (AIDS),AI207,,,2,2,No,1,,,,,SE-AIDS,Dr. C. S. Khandelwal,
+SUBJECT,Constitution of India (AIDS),AI208,,,2,2,No,1,,,,,SE-AIDS,Prof. G. R. Basole,
+SUBJECT,Computer Networks (ECCE),EC301,,,3,3,No,1,,,,,TY-ECCE,"Prof. A. R. Salunke, Dr. S. N. Pawar",
+SUBJECT,CN Lab (ECCE),EC301L,,,2,2,Yes,2,,,,,TY-ECCE,Prof. A. R. Salunke,
+SUBJECT,Operating Systems (ECCE),EC302,,,3,3,No,1,,,,,TY-ECCE,Prof. A. P. Phatale,
+SUBJECT,OS Lab (ECCE),EC302L,,,2,2,Yes,2,,,,,TY-ECCE,Prof. A. P. Phatale,
+SUBJECT,Database Management Systems (ECCE),EC303,,,3,3,No,1,,,,,TY-ECCE,"Dr. C. S. Khandelwal, Prof. A. P. Phatale",
+SUBJECT,DBMS Lab (ECCE),EC303L,,,2,2,Yes,2,,,,,TY-ECCE,Dr. C. S. Khandelwal,
+SUBJECT,Analog Communication (AC),EC304,,,3,3,No,1,,,,,TY-ECCE,"Prof. M. A. Mulay, Dr. V. A. More",
+SUBJECT,AC Lab,EC304L,,,2,2,Yes,2,,,,,TY-ECCE,Prof. M. A. Mulay,
+SUBJECT,PE-I (IoT),EC305,,,3,3,No,1,,,,,TY-ECCE,"Prof. F. I. Shaikh, Prof. P. B. Murmude",
+SUBJECT,IoT Lab,EC305L,,,2,2,Yes,2,,,,,TY-ECCE,Prof. P. B. Murmude,
+SUBJECT,MDM (TY-ECCE),EC306,,,2,2,No,1,,,,,TY-ECCE,Prof. P. B. Murmude,
+SUBJECT,Computer Networks (TY-AIDS),AI301,,,3,3,No,1,,,,,TY-AIDS,"Prof. A. R. Salunke, Dr. S. N. Pawar",
+SUBJECT,CN Lab (TY-AIDS),AI301L,,,2,2,Yes,2,,,,,TY-AIDS,Prof. A. R. Salunke,
+SUBJECT,Operating Systems (TY-AIDS),AI302,,,3,3,No,1,,,,,TY-AIDS,Prof. A. P. Phatale,
+SUBJECT,OS Lab (TY-AIDS),AI302L,,,2,2,Yes,2,,,,,TY-AIDS,Prof. A. P. Phatale,
+SUBJECT,DBMS (TY-AIDS),AI303,,,3,3,No,1,,,,,TY-AIDS,Dr. C. S. Khandelwal,
+SUBJECT,DBMS Lab (TY-AIDS),AI303L,,,2,2,Yes,2,,,,,TY-AIDS,Dr. C. S. Khandelwal,
+SUBJECT,Data Science (TY-AIDS),AI304,,,3,3,No,1,,,,,TY-AIDS,Prof. M. K. Pawar,
+SUBJECT,DS Lab (TY-AIDS),AI304L,,,2,2,Yes,2,,,,,TY-AIDS,Prof. M. K. Pawar,
+SUBJECT,PE-I (TY-AIDS),AI305,,,3,3,No,1,,,,,TY-AIDS,Prof. V. A. Kulkarni,
+SUBJECT,MDM (TY-AIDS),AI306,,,2,2,No,1,,,,,TY-AIDS,Dr. S. D. Gavarskar,
+SUBJECT,Digital Signal Processing (DSP),EC401,,,3,3,No,1,,,,,B.Tech-ECCE,"Prof. F. I. Shaikh, Prof. M. A. Mulay",
+SUBJECT,DSP Lab,EC401L,,,2,2,Yes,2,,,,,B.Tech-ECCE,Prof. F. I. Shaikh,
+SUBJECT,Computer Networks (B.Tech-ECCE),EC402,,,3,3,No,1,,,,,B.Tech-ECCE,"Dr. S. N. Pawar, Prof. S. D. Jadhav",
+SUBJECT,CN Lab (B.Tech-ECCE),EC402L,,,2,2,Yes,2,,,,,B.Tech-ECCE,Prof. S. D. Jadhav,
+SUBJECT,Software Engineering (ECCE),EC403,,,3,3,No,1,,,,,B.Tech-ECCE,Prof. S. A. Annadate,
+SUBJECT,Software Engineering Lab (ECCE),EC403L,,,2,2,Yes,2,,,,,B.Tech-ECCE,Prof. S. A. Annadate,
+SUBJECT,PE-III (DIP),EC404,,,3,3,No,1,,,,,B.Tech-ECCE,"Prof. F. I. Shaikh, Prof. S. A. Annadate",
+SUBJECT,DIP Lab,EC404L,,,2,2,Yes,2,,,,,B.Tech-ECCE,Prof. S. A. Annadate,
+SUBJECT,PE-IV (AI),EC405,,,3,3,No,1,,,,,B.Tech-ECCE,Prof. V. J. Lipne,
+SUBJECT,AI Lab (ECCE),EC405L,,,2,2,Yes,2,,,,,B.Tech-ECCE,Prof. V. J. Lipne,
+SUBJECT,Business Management (ECCE),EC406,,,2,2,No,1,,,,,B.Tech-ECCE,Prof. S. D. Jadhav,
+SUBJECT,Natural Language Processing (NLP),AI401,,,3,3,No,1,,,,,B.Tech-AIDS,Prof. P. P. Patil,
+SUBJECT,NLP Lab,AI401L,,,2,2,Yes,2,,,,,B.Tech-AIDS,Prof. P. P. Patil,
+SUBJECT,Computer Networks (B.Tech-AIDS),AI402,,,3,3,No,1,,,,,B.Tech-AIDS,"Dr. S. N. Pawar, Prof. A. R. Salunke",
+SUBJECT,CN Lab (B.Tech-AIDS),AI402L,,,2,2,Yes,2,,,,,B.Tech-AIDS,Prof. A. R. Salunke,
+SUBJECT,Software Engineering (AIDS),AI403,,,3,3,No,1,,,,,B.Tech-AIDS,Prof. S. A. Annadate,
+SUBJECT,Software Engineering Lab (AIDS),AI403L,,,2,2,Yes,2,,,,,B.Tech-AIDS,Prof. S. A. Annadate,
+SUBJECT,Web Development (AIDS),AI404,,,3,3,No,1,,,,,B.Tech-AIDS,"Prof. M. K. Pawar, Prof. P. B. Murmude",
+SUBJECT,Web Development Lab (AIDS),AI404L,,,2,2,Yes,2,,,,,B.Tech-AIDS,Prof. M. K. Pawar,
+SUBJECT,PE-III (AIDS),AI405,,,3,3,No,1,,,,,B.Tech-AIDS,"Prof. V. J. Lipne, Prof. P. P. Patil",
+SUBJECT,PE-III Lab (AIDS),AI405L,,,2,2,Yes,2,,,,,B.Tech-AIDS,Prof. V. J. Lipne,
+SUBJECT,Business Management (AIDS),AI406,,,2,2,No,1,,,,,B.Tech-AIDS,Prof. S. D. Jadhav,

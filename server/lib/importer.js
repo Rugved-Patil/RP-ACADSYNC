@@ -92,12 +92,33 @@ function parseExcel(buffer) {
 const Transform = {
   classes: (rows) =>
     rows
-      .map((r) => ({
-        name: r["Class Name"] || r["Name"] || r["name"] || r["Class"] || "",
-        year_name: r["Year"] || r["Academic Year"] || "",
-        capacity: parseInt(r["Capacity"]) || 60,
-        student_count: parseInt(r["Student Count"]) || 0,
-      }))
+      .map((r) => {
+        let batches = ["Batch A", "Batch B", "Batch C"];
+        const rawBatches = r["Batches"] || r["batches"] || r["Batch"] || "";
+        if (rawBatches) {
+          if (typeof rawBatches === "string" && rawBatches.trim().length > 0) {
+            const parts = rawBatches.split(/[,;]/).map((b) => b.trim()).filter(Boolean);
+            if (parts.length > 0) {
+              batches = parts.map((p) => {
+                const match = p.match(/^([^:]+)(?::\s*(\d+))?$/);
+                if (match) {
+                  const name = match[1].trim();
+                  const count = match[2] ? parseInt(match[2]) : undefined;
+                  return count !== undefined ? { name, count } : name;
+                }
+                return p;
+              });
+            }
+          }
+        }
+        return {
+          name: r["Class Name"] || r["Name"] || r["name"] || r["Class"] || "",
+          year_name: r["Year"] || r["Academic Year"] || "",
+          capacity: parseInt(r["Capacity"]) || 60,
+          student_count: parseInt(r["Student Count"] || r["Capacity"]) || 60,
+          batches: batches,
+        };
+      })
       .filter((r) => r.name),
 
   teachers: (rows) =>
@@ -118,14 +139,18 @@ const Transform = {
           String(r["Is_Lab"] || r["Is Lab"] || r["Type"] || "").toLowerCase().includes(v)
         );
         const labDur = parseInt(r["Lab_Duration_Hours"] || r["Lab Duration Hours"] || r["Lab Duration"] || r["Duration"]) || (isLab ? 2 : 1);
+        const credits = parseInt(r["Credits"] || r["Credit"] || r["credits"] || r["Periods_Per_Week"] || r["Periods per Week"] || (isLab ? 1 : 3)) || (isLab ? 1 : 3);
+        const periodsPerWeek = isLab ? credits : (parseInt(r["Periods_Per_Week"] || r["Periods per Week"] || r["Periods"]) || credits);
+        
         return {
           name: r["Subject Name"] || r["Name"] || r["name"] || "",
           code: r["Subject Code"] || r["Code"] || r["code"] || "",
-          periods_per_week: parseInt(r["Periods_Per_Week"] || r["Periods per Week"] || r["Periods"]) || 1,
+          credits: credits,
+          periods_per_week: periodsPerWeek,
           is_lab: isLab,
           lab_duration_hours: labDur,
-          classes: r["Classes"] ? String(r["Classes"]).split(",").map((c) => c.trim()) : [],
-          teachers: r["Teachers"] ? String(r["Teachers"]).split(",").map((t) => t.trim()) : [],
+          classes: r["Classes"] ? String(r["Classes"]).split(",").map((c) => c.trim()).filter(Boolean) : [],
+          teachers: r["Teachers"] ? String(r["Teachers"]).trim() : "",
         };
       })
       .filter((r) => r.name && r.code),
@@ -241,10 +266,12 @@ const Insert = {
     }
     let count = 0;
     for (const r of rows) {
-      upsertReturning("classes", ["name", "year_id", "student_count"], "name", {
+      upsertReturning("classes", ["name", "year_id", "student_count", "capacity", "batches"], "name", {
         name: r.name,
         year_id: r.year_name ? yearIds[r.year_name] : null,
         student_count: r.student_count,
+        capacity: r.capacity || 60,
+        batches: JSON.stringify(r.batches || ["Batch A", "Batch B", "Batch C"]),
       });
       count++;
     }
@@ -266,7 +293,7 @@ const Insert = {
           .all(...r.subjects);
         for (const subj of matchedSubjects) {
           const exists = db
-            .prepare("SELECT id FROM teacher_subject_assignments WHERE teacher_id = ? AND subject_id = ?")
+            .prepare("SELECT id FROM teacher_subject_assignments WHERE teacher_id = ? AND subject_id = ? AND class_id IS NULL")
             .get(id, subj.id);
           if (!exists) {
             db.prepare(
@@ -285,22 +312,26 @@ const Insert = {
     for (const r of rows) {
       const id = upsertReturning(
         "subjects",
-        ["name", "code", "periods_per_week", "is_lab", "lab_duration_hours"],
+        ["name", "code", "credits", "periods_per_week", "is_lab", "lab_duration_hours"],
         "code",
         {
           name: r.name,
           code: r.code,
-          periods_per_week: r.periods_per_week,
+          credits: r.credits || (r.is_lab ? 1 : 3),
+          periods_per_week: r.periods_per_week || (r.is_lab ? 1 : 3),
           is_lab: r.is_lab ? 1 : 0,
           lab_duration_hours: r.lab_duration_hours || (r.is_lab ? 2 : 1),
         }
       );
+
+      const assignedClassIds = [];
       if (r.classes && r.classes.length > 0) {
         const placeholders = r.classes.map(() => "?").join(",");
         const matchedClasses = db
-          .prepare(`SELECT id FROM classes WHERE name IN (${placeholders})`)
+          .prepare(`SELECT id, name FROM classes WHERE name IN (${placeholders})`)
           .all(...r.classes);
         for (const cls of matchedClasses) {
+          assignedClassIds.push(cls);
           const exists = db
             .prepare("SELECT id FROM subject_class_assignments WHERE subject_id = ? AND class_id = ?")
             .get(id, cls.id);
@@ -311,19 +342,58 @@ const Insert = {
           }
         }
       }
+
       if (r.teachers && r.teachers.length > 0) {
-        const placeholders = r.teachers.map(() => "?").join(",");
-        const matchedTeachers = db
-          .prepare(`SELECT id FROM teachers WHERE name IN (${placeholders})`)
-          .all(...r.teachers);
-        for (const t of matchedTeachers) {
-          const exists = db
-            .prepare("SELECT id FROM teacher_subject_assignments WHERE teacher_id = ? AND subject_id = ?")
-            .get(t.id, id);
-          if (!exists) {
-            db.prepare(
-              "INSERT INTO teacher_subject_assignments (id, teacher_id, subject_id, created_at) VALUES (?, ?, ?, ?)"
-            ).run(randomUUID(), t.id, id, new Date().toISOString());
+        // Check if teacher field contains class-specific mappings e.g. "SE-ECCE: Prof. M. A. Mulay; SE-AIDS: Prof. V. A. Kulkarni"
+        const teacherStr = r.teachers;
+        if (teacherStr.includes(":") && teacherStr.includes(";")) {
+          const classTeacherPairs = teacherStr.split(";").map((p) => p.trim()).filter(Boolean);
+          for (const pair of classTeacherPairs) {
+            const [cName, tNames] = pair.split(":").map((s) => s.trim());
+            const targetClass = db.prepare("SELECT id FROM classes WHERE name = ?").get(cName);
+            const teacherList = tNames ? tNames.split(",").map((s) => s.trim()).filter(Boolean) : [];
+            for (const tName of teacherList) {
+              const teacherObj = db.prepare("SELECT id FROM teachers WHERE name = ?").get(tName);
+              if (teacherObj) {
+                const exists = db
+                  .prepare("SELECT id FROM teacher_subject_assignments WHERE teacher_id = ? AND subject_id = ? AND class_id = ?")
+                  .get(teacherObj.id, id, targetClass?.id || null);
+                if (!exists) {
+                  db.prepare(
+                    "INSERT INTO teacher_subject_assignments (id, teacher_id, subject_id, class_id, created_at) VALUES (?, ?, ?, ?, ?)"
+                  ).run(randomUUID(), teacherObj.id, id, targetClass?.id || null, new Date().toISOString());
+                }
+              }
+            }
+          }
+        } else {
+          // Comma-separated list of teacher names
+          const teacherNames = teacherStr.split(",").map((t) => t.trim()).filter(Boolean);
+          for (const tName of teacherNames) {
+            const teacherObj = db.prepare("SELECT id FROM teachers WHERE name = ?").get(tName);
+            if (teacherObj) {
+              if (assignedClassIds.length > 0) {
+                for (const cls of assignedClassIds) {
+                  const exists = db
+                    .prepare("SELECT id FROM teacher_subject_assignments WHERE teacher_id = ? AND subject_id = ? AND class_id = ?")
+                    .get(teacherObj.id, id, cls.id);
+                  if (!exists) {
+                    db.prepare(
+                      "INSERT INTO teacher_subject_assignments (id, teacher_id, subject_id, class_id, created_at) VALUES (?, ?, ?, ?, ?)"
+                    ).run(randomUUID(), teacherObj.id, id, cls.id, new Date().toISOString());
+                  }
+                }
+              } else {
+                const exists = db
+                  .prepare("SELECT id FROM teacher_subject_assignments WHERE teacher_id = ? AND subject_id = ?")
+                  .get(teacherObj.id, id);
+                if (!exists) {
+                  db.prepare(
+                    "INSERT INTO teacher_subject_assignments (id, teacher_id, subject_id, created_at) VALUES (?, ?, ?, ?)"
+                  ).run(randomUUID(), teacherObj.id, id, new Date().toISOString());
+                }
+              }
+            }
           }
         }
       }
@@ -372,6 +442,41 @@ const Insert = {
 
   master(data) {
     const { createUser } = require("./auth");
+
+    // Ensure default 10:00 - 17:00 standard academic timing exists if no timing present
+    const existingTiming = db.prepare("SELECT id FROM timings LIMIT 1").get();
+    if (!existingTiming) {
+      const timingId = randomUUID();
+      const now = new Date().toISOString();
+      const defaultSlots = [
+        { start_time: "10:00", end_time: "11:00", is_break: 0, slot_order: 1 },
+        { start_time: "11:00", end_time: "12:00", is_break: 0, slot_order: 2 },
+        { start_time: "12:00", end_time: "12:45", is_break: 1, slot_order: 3 },
+        { start_time: "12:45", end_time: "13:45", is_break: 0, slot_order: 4 },
+        { start_time: "13:45", end_time: "14:45", is_break: 0, slot_order: 5 },
+        { start_time: "14:45", end_time: "15:00", is_break: 1, slot_order: 6 },
+        { start_time: "15:00", end_time: "16:00", is_break: 0, slot_order: 7 },
+        { start_time: "16:00", end_time: "17:00", is_break: 0, slot_order: 8 },
+      ];
+      db.prepare(
+        "INSERT INTO timings (id, name, working_days, periods, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
+      ).run(
+        timingId,
+        "Standard Academic Schedule (10:00 - 17:00)",
+        JSON.stringify([0, 1, 2, 3, 4, 5]),
+        JSON.stringify(defaultSlots),
+        now,
+        now
+      );
+      const insertSlot = db.prepare(
+        `INSERT INTO time_slots (id, timing_id, start_time, end_time, is_break, slot_order, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      defaultSlots.forEach((s) => {
+        insertSlot.run(randomUUID(), timingId, s.start_time, s.end_time, s.is_break, s.slot_order, now, now);
+      });
+    }
+
     Insert.classes(data.classes);
     Insert.classrooms(data.classrooms);
     Insert.teachers(data.teachers);

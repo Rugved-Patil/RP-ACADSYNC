@@ -45,37 +45,10 @@ const Settings = () => {
   const currentUser = authService.getUser();
   const isAdmin = currentUser?.role === "admin";
 
-  // Merge sample data modal state
-  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
-  const [mergeConfirmed, setMergeConfirmed] = useState(false);
-  const [isMerging, setIsMerging] = useState(false);
-
   // Kill switch modal state
   const [killDialogOpen, setKillDialogOpen] = useState(false);
   const [killInput, setKillInput] = useState("");
   const [isKilling, setIsKilling] = useState(false);
-
-  const handleMergeSubmit = async () => {
-    if (!mergeConfirmed) return;
-    setIsMerging(true);
-    try {
-      const res = await adminService.mergeSampleData();
-      toast({
-        title: "Sample Data Merged",
-        description: res.message,
-      });
-      setMergeDialogOpen(false);
-      setMergeConfirmed(false);
-    } catch (err: any) {
-      toast({
-        title: "Merge Failed",
-        description: err.message || "Failed to merge sample data",
-        variant: "destructive",
-      });
-    } finally {
-      setIsMerging(false);
-    }
-  };
 
   const handleKillSubmit = async () => {
     if (killInput !== "DELETE ALL DATA") return;
@@ -473,73 +446,8 @@ const Settings = () => {
         {/* Admin Data Management Tab */}
         {isAdmin && (
           <TabsContent value="admin-data" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Card 1: Add More Default Data */}
-              <Card className="border-primary/20 shadow-sm flex flex-col justify-between">
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-1">
-                    <Badge className="bg-primary/15 text-primary border-primary/30 text-xs">
-                      Continuous Generation • Safe Merge
-                    </Badge>
-                    <Sparkles className="h-4 w-4 text-primary" />
-                  </div>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <PlusCircle className="h-5 w-5 text-primary" />
-                    Generate & Merge More Data
-                  </CardTitle>
-                  <CardDescription>
-                    Dynamically generates and merges brand-new unique academic records (departments, classes, faculty, subjects, and rooms) with each press—seamlessly expanding your institution without overwriting existing data.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Each click intelligently provisions the next unrepresented academic department or specialized track:
-                    </p>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>Unique Departments:</strong> IT, AI & Data Science, Cyber Security, Robotics, ENTC & beyond</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>4 New Class Divisions:</strong> (SE-A/B, TE-A/B) generated per department</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>3–4 New Faculty:</strong> Specialized professors mapped to new course curricula</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>4–6 Subjects & Labs:</strong> Theory lectures and 2-hour laboratory sessions</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>2–3 New Classrooms:</strong> Smart lecture halls & dedicated departmental lab facilities</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span><strong>User Accounts:</strong> Fresh teacher and student representative logins automatically generated</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <Button
-                      onClick={() => {
-                        setMergeConfirmed(false);
-                        setMergeDialogOpen(true);
-                      }}
-                      className="w-full gap-2"
-                    >
-                      <PlusCircle className="h-4 w-4" />
-                      Generate & Merge More Data
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 2: Kill Switch */}
+            <div className="max-w-2xl">
+              {/* Kill Switch Card */}
               <Card className="border-destructive/30 shadow-sm flex flex-col justify-between">
                 <CardHeader>
                   <div className="flex items-center justify-between mb-1">
@@ -610,87 +518,6 @@ const Settings = () => {
           </TabsContent>
         )}
       </Tabs>
-
-      {/* Double Confirmation Modal: Merge Sample Data */}
-      <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Generate & Merge More Unique Data (Double Confirmation)
-            </DialogTitle>
-            <DialogDescription>
-              Step 1 of 2: Every press provisions a new unique academic department or specialized track (classes, faculty, courses, rooms, logins) and seamlessly merges it into your timetable database.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Unique Batch Generation:</span>
-                <span className="font-semibold text-primary">Next unrepresented department / track</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">New Classes per click:</span>
-                <span className="font-semibold">4 Class Divisions (SE & TE)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Faculty members:</span>
-                <span className="font-semibold">3–4 Specialized Professors</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subjects & Labs:</span>
-                <span className="font-semibold">4–6 Theory & Lab Courses</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Existing data impact:</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Zero data loss / Preserves existing data</span>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-2 pt-2 border-t">
-              <Checkbox
-                id="confirm-merge"
-                checked={mergeConfirmed}
-                onCheckedChange={(checked) => setMergeConfirmed(!!checked)}
-              />
-              <label
-                htmlFor="confirm-merge"
-                className="text-xs font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Step 2: I confirm that I want to merge these additional sample records into the database.
-              </label>
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setMergeDialogOpen(false)}
-              disabled={isMerging}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleMergeSubmit}
-              disabled={!mergeConfirmed || isMerging}
-              className="gap-2"
-            >
-              {isMerging ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Merging...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  Confirm & Merge Data
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Double Confirmation Modal: Kill Switch */}
       <Dialog open={killDialogOpen} onOpenChange={setKillDialogOpen}>
