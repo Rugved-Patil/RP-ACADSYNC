@@ -20,6 +20,7 @@ import Login from "./pages/Login";
 import ChangeRequests from "./pages/ChangeRequests";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { authService, UserRole } from "./services/authService";
+import ChatbotWidget from "./components/chat/ChatbotWidget";
 
 const queryClient = new QueryClient();
 
@@ -162,6 +163,7 @@ const App = () => (
               }
             />
           </Routes>
+          <ChatbotWidget />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

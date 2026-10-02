@@ -29,12 +29,31 @@ const {
   listEnrichedRequests,
 } = require("./lib/requests");
 const { mergeSampleData, killSwitch } = require("./lib/adminData");
+const { askChatbot } = require("./lib/chatbot");
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "15mb" })); // generous limit: CSV/Excel imports arrive as base64 in the JSON body
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
+
+// -- AI Chatbot Route (Gemini 3.6 Flash Assistant) --------------------------
+app.post("/api/chat", async (req, res) => {
+  try {
+    const { message, history, apiKey } = req.body || {};
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ error: "Message is required." });
+    }
+    const result = await askChatbot({ message: message.trim(), history, apiKey });
+    if (result.error && !result.reply) {
+      return res.status(500).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error("Chatbot request failed:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // -- Auth Routes (v2.0.0 Section 7.1 & 7.2) --------------------------------
 app.post("/api/auth/login", (req, res) => {

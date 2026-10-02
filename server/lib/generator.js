@@ -365,6 +365,43 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
       }
 
       if (!bestSlot) {
+        // Secondary pass: find ANY slot where class and teacher are free
+        relaxSearch: for (const d of days) {
+          for (const s of slots) {
+            const sid = s.id;
+            if (bookedClassAll.has(`${d}:${sid}:${unit.class_id}`)) continue;
+            for (const t of eligibleTeachers) {
+              if (bookedTeachers.has(`${d}:${sid}:${t.id}`)) continue;
+              for (const r of candidateRooms) {
+                if (r && bookedRooms.has(`${d}:${sid}:${r.id}`)) continue;
+                bestDay = d;
+                bestSlot = sid;
+                bestTeacher = t;
+                bestRoom = r;
+                break relaxSearch;
+              }
+            }
+          }
+        }
+      }
+
+      if (!bestSlot) {
+        // Tertiary pass: any slot where class is free
+        tertiarySearch: for (const d of days) {
+          for (const s of slots) {
+            const sid = s.id;
+            if (!bookedClassAll.has(`${d}:${sid}:${unit.class_id}`)) {
+              bestDay = d;
+              bestSlot = sid;
+              bestTeacher = eligibleTeachers[0];
+              bestRoom = candidateRooms[0] || fallbackRooms[0];
+              break tertiarySearch;
+            }
+          }
+        }
+      }
+
+      if (!bestSlot) {
         bestDay = days[0];
         bestSlot = slots[0].id;
       }
@@ -691,7 +728,7 @@ function generateTimetable({ name, academicYear, yearId, timingId, popSize = 40,
 
   // Generate candidate solutions and perform fast conflict-directed repair until 0 violations
   let bestSolution = null;
-  const maxAttempts = 6;
+  const maxAttempts = 15;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const candidateGenes = generateSmartChromosome();

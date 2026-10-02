@@ -17,6 +17,16 @@ server/data/*.db
 server/data/*.db-shm
 server/data/*.db-wal
 
+# Environment Variables & Secrets
+.env
+.env.local
+*.env
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
