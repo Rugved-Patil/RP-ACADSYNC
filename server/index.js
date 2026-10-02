@@ -69,8 +69,6 @@ app.get("/api/admin/export-master-data", requireAuth, requireRole("admin"), (req
   }
 });
 
-app.post("/api/admin/merge-sample-data", requireAuth, requireRole("admin"), (req, res) => {
-
 // -- Auth Routes (v2.0.0 Section 7.1 & 7.2) --------------------------------
 app.post("/api/auth/login", (req, res) => {
   try {

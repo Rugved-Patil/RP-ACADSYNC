@@ -186,4 +186,21 @@ describe("Authentication & Role Authorization Tests (v2.0.0)", () => {
     assert.strictEqual(nextCalled, false);
     assert.strictEqual(res.statusCode, 403);
   });
+
+  it("should authenticate default college seed accounts (admin, teacher, student)", () => {
+    // Admin
+    const adminAuth = authenticate("admin@acadsync.edu", "admin123");
+    assert.strictEqual(adminAuth.user.role, "admin");
+    assert.ok(adminAuth.token);
+
+    // Faculty
+    const teacherAuth = authenticate("snpawar@jnec.ac.in", "teacher123");
+    assert.strictEqual(teacherAuth.user.role, "teacher");
+    assert.ok(teacherAuth.token);
+
+    // Student
+    const studentAuth = authenticate("student.seecce@jnec.ac.in", "student123");
+    assert.strictEqual(studentAuth.user.role, "student");
+    assert.ok(studentAuth.token);
+  });
 });
