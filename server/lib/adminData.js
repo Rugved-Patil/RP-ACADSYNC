@@ -496,6 +496,7 @@ function killSwitch(currentAdminId) {
     "subject_class_assignments",
     "teacher_subject_assignments",
     "class_classroom_assignments",
+    "subject_classroom_assignments",
     "time_slots",
     "timings",
     "subjects",
@@ -550,20 +551,55 @@ function exportMasterData() {
 
   const subjClassMap = db.prepare("SELECT * FROM subject_class_assignments").all();
   const teacherSubjMap = db.prepare("SELECT * FROM teacher_subject_assignments").all();
+  let classRoomMap = [];
+  try {
+    classRoomMap = db.prepare("SELECT * FROM class_classroom_assignments").all();
+  } catch {}
+  let subjRoomMap = [];
+  try {
+    subjRoomMap = db.prepare("SELECT * FROM subject_classroom_assignments").all();
+  } catch {}
+
   const classMap = new Map(classes.map((c) => [c.id, c]));
+  const classroomMap = new Map(classrooms.map((r) => [r.id, r]));
   const teacherMap = new Map(teachers.map((t) => [t.id, t]));
 
-  const rows = [];
-  rows.push("Record_Type,Name,Code,Year,Capacity,Credits,Periods_Per_Week,Is_Lab,Lab_Duration_Hours,Email,Specialization,Location,Equipment,Classes,Teachers,Batches");
-
-  function esc(val) {
-    if (val === null || val === undefined) return "";
-    const s = String(val);
-    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-      return `"${s.replace(/"/g, '""')}"`;
-    }
-    return s;
+  function toCsvRow(arr) {
+    return arr
+      .map((val) => {
+        if (val === undefined || val === null) return "";
+        const str = String(val);
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      })
+      .join(",");
   }
+
+  const rows = [];
+  const header = [
+    "Record_Type",
+    "Name",
+    "Code",
+    "Year",
+    "Capacity",
+    "Credits",
+    "Periods_Per_Week",
+    "Is_Lab",
+    "Lab_Duration_Hours",
+    "Email",
+    "Specialization",
+    "Max_Daily_Periods",
+    "Location",
+    "Equipment",
+    "Classes",
+    "Teachers",
+    "Batches",
+    "Default_Room",
+    "Allowed_Rooms",
+  ];
+  rows.push(toCsvRow(header));
 
   // 1. Classes
   for (const c of classes) {
@@ -572,22 +608,94 @@ function exportMasterData() {
       try {
         const bParsed = typeof c.batches === "string" ? JSON.parse(c.batches) : c.batches;
         if (Array.isArray(bParsed)) {
-          batchesStr = bParsed.map((b) => typeof b === "object" ? `${b.name || 'Batch'}: ${b.capacity || 20}` : b).join(", ");
+          batchesStr = bParsed
+            .map((b) => (typeof b === "object" ? `${b.name || "Batch"}: ${b.capacity || 20}` : b))
+            .join(", ");
         }
       } catch {}
     }
-    rows.push(`CLASS,${esc(c.name)},,${esc(yearMap.get(c.year_id) || "")},${c.student_count || 60},,,No,1,,,,,,,${esc(batchesStr)}`);
+
+    const assignedRoomId = classRoomMap.find((cr) => cr.class_id === c.id)?.classroom_id;
+    const defaultRoomName = assignedRoomId ? classroomMap.get(assignedRoomId)?.name || "" : "";
+
+    rows.push(
+      toCsvRow([
+        "CLASS",
+        c.name,
+        "",
+        yearMap.get(c.year_id) || "",
+        c.student_count || c.capacity || 60,
+        "",
+        "",
+        "No",
+        "1",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        batchesStr,
+        defaultRoomName,
+        "",
+      ])
+    );
   }
 
   // 2. Classrooms & Labs
   for (const r of classrooms) {
     const isLab = r.is_lab ? "Yes" : "No";
-    rows.push(`CLASSROOM,${esc(r.name)},,,${r.capacity || 60},,,${isLab},,,,${esc(r.location || "")},${esc(r.equipment || "")},,,`);
+    rows.push(
+      toCsvRow([
+        "CLASSROOM",
+        r.name,
+        "",
+        "",
+        r.capacity || 60,
+        "",
+        "",
+        isLab,
+        "",
+        "",
+        "",
+        "",
+        r.location || "",
+        r.equipment || "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ])
+    );
   }
 
   // 3. Teachers
   for (const t of teachers) {
-    rows.push(`TEACHER,${esc(t.name)},,,,,,No,,${esc(t.email || "")},${esc(t.specialization || "")},,,,,`);
+    rows.push(
+      toCsvRow([
+        "TEACHER",
+        t.name,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "No",
+        "",
+        t.email || "",
+        t.specialization || "",
+        t.max_periods_per_day || 5,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ])
+    );
   }
 
   // 4. Subjects
@@ -596,14 +704,59 @@ function exportMasterData() {
     const assignedClassNames = assignedClassIds.map((cid) => classMap.get(cid)?.name).filter(Boolean);
 
     const assignedTeacherIds = teacherSubjMap.filter((ts) => ts.subject_id === s.id).map((ts) => ts.teacher_id);
-    const assignedTeacherNames = Array.from(new Set(assignedTeacherIds.map((tid) => teacherMap.get(tid)?.name).filter(Boolean)));
+    const assignedTeacherNames = Array.from(
+      new Set(assignedTeacherIds.map((tid) => teacherMap.get(tid)?.name).filter(Boolean))
+    );
 
     const isLab = s.is_lab ? "Yes" : "No";
     const labDur = s.is_lab ? (s.lab_duration_hours || 2) : 1;
-    const credits = s.credits || (s.is_lab ? 1 : (s.periods_per_week || 3));
-    const periods = s.periods_per_week || (s.is_lab ? 2 : credits);
+    const credits = s.credits !== undefined && s.credits !== null && s.credits > 0
+      ? s.credits
+      : (s.is_lab ? 1 : (s.periods_per_week || 3));
+    const periods = s.is_lab
+      ? credits
+      : (s.periods_per_week !== undefined && s.periods_per_week !== null && s.periods_per_week > 0
+          ? s.periods_per_week
+          : credits);
 
-    rows.push(`SUBJECT,${esc(s.name)},${esc(s.code || "")},,,${credits},${periods},${isLab},${labDur},,,,,${esc(assignedClassNames.join(", "))},${esc(assignedTeacherNames.join(", "))},`);
+    // Resolve allowed room names
+    const directRoomIds = subjRoomMap.filter((sr) => sr.subject_id === s.id).map((sr) => sr.classroom_id);
+    let allowedNames = directRoomIds.map((rid) => classroomMap.get(rid)?.name).filter(Boolean);
+    if (allowedNames.length === 0 && s.allowed_rooms) {
+      try {
+        const parsed = typeof s.allowed_rooms === "string" ? JSON.parse(s.allowed_rooms) : s.allowed_rooms;
+        if (Array.isArray(parsed)) allowedNames = parsed;
+      } catch {
+        if (typeof s.allowed_rooms === "string") {
+          allowedNames = s.allowed_rooms.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+        }
+      }
+    }
+    const allowedRoomsStr = Array.from(new Set(allowedNames)).join(", ");
+
+    rows.push(
+      toCsvRow([
+        "SUBJECT",
+        s.name,
+        s.code || "",
+        "",
+        "",
+        credits,
+        periods,
+        isLab,
+        labDur,
+        "",
+        "",
+        "",
+        "",
+        "",
+        assignedClassNames.join(", "),
+        assignedTeacherNames.join(", "),
+        "",
+        "",
+        allowedRoomsStr,
+      ])
+    );
   }
 
   return rows.join("\n");

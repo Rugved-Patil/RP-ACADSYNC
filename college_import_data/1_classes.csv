@@ -1,7 +1,7 @@
-Class Name,Year,Student Count
-SE-ECCE,Second Year (SE),58
-SE-AIDS,Second Year (SE),55
-TY-ECCE,Third Year (TY),56
-TY-AIDS,Third Year (TY),54
-B.Tech-ECCE,Final Year (B.Tech),57
-B.Tech-AIDS,Final Year (B.Tech),56
+Class Name,Year,Student Count,Default Room
+SE-ECCE,Second Year (SE),58,SF-31
+SE-AIDS,Second Year (SE),55,SF-32
+TY-ECCE,Third Year (TY),56,SF-33
+TY-AIDS,Third Year (TY),54,TF-31
+B.Tech-ECCE,Final Year (B.Tech),57,TF-32
+B.Tech-AIDS,Final Year (B.Tech),56,FF-22

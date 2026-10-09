@@ -55,12 +55,15 @@ const Subjects = () => {
 
   const handleSubmit = async (data: Omit<Subject, "id">) => {
     try {
+      const subjectCredits = data.credits !== undefined && data.credits !== null ? data.credits : (data.isLab ? 1 : (data.periodsPerWeek || 3));
+
       if (currentSubject) {
         const { error: subjectError } = await supabase
           .from('subjects')
           .update({
             name: data.name,
             code: data.code,
+            credits: subjectCredits,
             periods_per_week: data.periodsPerWeek,
             is_lab: data.isLab,
             lab_duration_hours: data.lab_duration_hours,
@@ -98,6 +101,7 @@ const Subjects = () => {
           .insert({
             name: data.name,
             code: data.code,
+            credits: subjectCredits,
             periods_per_week: data.periodsPerWeek,
             is_lab: data.isLab,
             lab_duration_hours: data.lab_duration_hours,
@@ -297,6 +301,19 @@ const Subjects = () => {
         columns={[
           { key: "name", title: "Name" },
           { key: "code", title: "Code" },
+          {
+            key: "credits",
+            title: "Credits",
+            render: (subject: Subject) => (
+              <span className="font-medium text-foreground">
+                {subject.credits !== undefined && subject.credits !== null
+                  ? subject.credits
+                  : subject.isLab
+                  ? 1
+                  : subject.periodsPerWeek || 3}
+              </span>
+            ),
+          },
           {
             key: "periodsPerWeek",
             title: "Periods/Week",

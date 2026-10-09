@@ -127,6 +127,7 @@ export const TimetableService = {
         return {
           ...subject,
           classes: subjectAssignments.map((assignment: any) => assignment.class_id),
+          credits: subject.credits !== undefined && subject.credits !== null ? subject.credits : (subject.is_lab ? 1 : (subject.periods_per_week || 3)),
           periodsPerWeek: subject.periods_per_week || 1,
           isLab: subject.is_lab || false
         };

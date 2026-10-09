@@ -34,6 +34,7 @@ export interface Subject {
   name: string;
   code: string; // e.g., "CS101"
   classes?: string[]; // Array of class IDs this subject is assigned to - derived
+  credits?: number; // Academic credits (e.g. 1 for lab, 2 or 3 for theory)
   periodsPerWeek?: number; // Number of periods per week for this subject
   periods_per_week?: number;
   isLab?: boolean; // Indicates if this subject requires a lab

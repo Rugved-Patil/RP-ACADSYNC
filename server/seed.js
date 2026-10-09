@@ -31,6 +31,7 @@ function seed() {
     "subject_class_assignments",
     "teacher_subject_assignments",
     "class_classroom_assignments",
+    "subject_classroom_assignments",
     "time_slots",
     "timings",
     "subjects",
@@ -213,82 +214,112 @@ function seed() {
   const subjectList = [
     // SE-ECCE
     { name: "Digital System Design (DSD)", code: "EC201", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-ECCE"], teachers: ["Prof. M. A. Mulay"] },
-    { name: "DSD Lab", code: "EC201L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["SE-ECCE"], teachers: ["Prof. M. A. Mulay"] },
+    { name: "DSD Lab", code: "EC201L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["SE-ECCE"], teachers: ["Prof. M. A. Mulay"] },
     { name: "Data Structures (DS)", code: "EC202", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-ECCE"], teachers: ["Dr. S. D. Gavarskar"] },
-    { name: "DS Lab", code: "EC202L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["SE-ECCE"], teachers: ["Dr. S. D. Gavarskar"] },
+    { name: "DS Lab", code: "EC202L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["SE-ECCE"], teachers: ["Dr. S. D. Gavarskar"] },
     { name: "Electronic Circuits & Network Theory (EC&NT)", code: "EC203", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-ECCE"], teachers: ["Prof. F. I. Shaikh"] },
-    { name: "EC&NT Lab", code: "EC203L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["SE-ECCE"], teachers: ["Prof. F. I. Shaikh"] },
+    { name: "EC&NT Lab", code: "EC203L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["SE-ECCE"], teachers: ["Prof. F. I. Shaikh"] },
     { name: "Business Management & Financial Accounting (BMFA)", code: "EC204", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-ECCE"], teachers: ["Prof. S. D. Jadhav"] },
-    { name: "Community Engagement", code: "EC205L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["SE-ECCE"], teachers: ["Prof. G. R. Basole"] },
+    { name: "Community Engagement", code: "EC205L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["SE-ECCE"], teachers: ["Prof. G. R. Basole"] },
     { name: "Multidisciplinary Minor (MDM)", code: "EC206", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-ECCE"], teachers: ["Dr. S. D. Gavarskar"] },
     { name: "Constitution of India", code: "EC207", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-ECCE"], teachers: ["Prof. G. R. Basole"] },
 
     // SE-AIDS
     { name: "Digital Systems & Microprocessors (DS&MP)", code: "AI201", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-AIDS"], teachers: ["Prof. V. A. Kulkarni"] },
-    { name: "DS&MP Lab", code: "AI201L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["SE-AIDS"], teachers: ["Prof. V. A. Kulkarni"] },
+    { name: "DS&MP Lab", code: "AI201L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["SE-AIDS"], teachers: ["Prof. V. A. Kulkarni"] },
     { name: "Data Structures (AIDS)", code: "AI202", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-AIDS"], teachers: ["Dr. V. B. Malode"] },
-    { name: "DS Lab (AIDS)", code: "AI202L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["SE-AIDS"], teachers: ["Dr. V. B. Malode"] },
+    { name: "DS Lab (AIDS)", code: "AI202L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["SE-AIDS"], teachers: ["Dr. V. B. Malode"] },
     { name: "Probability & Random Processes (PB&RP)", code: "AI203", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-AIDS"], teachers: ["Prof. S. D. Jadhav"] },
-    { name: "Web Development Lab (SE)", code: "AI204L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["SE-AIDS"], teachers: ["Prof. M. K. Pawar"] },
+    { name: "Web Development Lab (SE)", code: "AI204L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["SE-AIDS"], teachers: ["Prof. M. K. Pawar"] },
     { name: "BM&FA (AIDS)", code: "AI205", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-AIDS"], teachers: ["Prof. S. D. Jadhav"] },
-    { name: "Community Engagement (AIDS)", code: "AI206L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["SE-AIDS"], teachers: ["Prof. G. R. Basole"] },
+    { name: "Community Engagement (AIDS)", code: "AI206L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["SE-AIDS"], teachers: ["Prof. G. R. Basole"] },
     { name: "MDM (AIDS)", code: "AI207", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-AIDS"], teachers: ["Dr. C. S. Khandelwal"] },
     { name: "Constitution of India (AIDS)", code: "AI208", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["SE-AIDS"], teachers: ["Prof. G. R. Basole"] },
 
     // TY-ECCE
     { name: "Computer Networks (ECCE)", code: "EC301", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-ECCE"], teachers: ["Prof. A. R. Salunke"] },
-    { name: "CN Lab (ECCE)", code: "EC301L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Prof. A. R. Salunke"] },
+    { name: "CN Lab (ECCE)", code: "EC301L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Prof. A. R. Salunke"] },
     { name: "Operating Systems (ECCE)", code: "EC302", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-ECCE"], teachers: ["Prof. A. P. Phatale"] },
-    { name: "OS Lab (ECCE)", code: "EC302L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Prof. A. P. Phatale"] },
+    { name: "OS Lab (ECCE)", code: "EC302L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Prof. A. P. Phatale"] },
     { name: "Database Management Systems (ECCE)", code: "EC303", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-ECCE"], teachers: ["Dr. C. S. Khandelwal"] },
-    { name: "DBMS Lab (ECCE)", code: "EC303L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Dr. C. S. Khandelwal"] },
+    { name: "DBMS Lab (ECCE)", code: "EC303L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Dr. C. S. Khandelwal"] },
     { name: "Analog Communication (AC)", code: "EC304", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-ECCE"], teachers: ["Prof. M. A. Mulay"] },
-    { name: "AC Lab", code: "EC304L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Prof. M. A. Mulay"] },
+    { name: "AC Lab", code: "EC304L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Prof. M. A. Mulay"] },
     { name: "PE-I (IoT)", code: "EC305", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-ECCE"], teachers: ["Prof. P. B. Murmude"] },
-    { name: "IoT Lab", code: "EC305L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Prof. P. B. Murmude"] },
+    { name: "IoT Lab", code: "EC305L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-ECCE"], teachers: ["Prof. P. B. Murmude"] },
     { name: "MDM (TY-ECCE)", code: "EC306", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["TY-ECCE"], teachers: ["Prof. P. B. Murmude"] },
 
     // TY-AIDS
     { name: "Computer Networks (TY-AIDS)", code: "AI301", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-AIDS"], teachers: ["Prof. A. R. Salunke"] },
-    { name: "CN Lab (TY-AIDS)", code: "AI301L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-AIDS"], teachers: ["Prof. A. R. Salunke"] },
+    { name: "CN Lab (TY-AIDS)", code: "AI301L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-AIDS"], teachers: ["Prof. A. R. Salunke"] },
     { name: "Operating Systems (TY-AIDS)", code: "AI302", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-AIDS"], teachers: ["Prof. A. P. Phatale"] },
-    { name: "OS Lab (TY-AIDS)", code: "AI302L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-AIDS"], teachers: ["Prof. A. P. Phatale"] },
+    { name: "OS Lab (TY-AIDS)", code: "AI302L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-AIDS"], teachers: ["Prof. A. P. Phatale"] },
     { name: "DBMS (TY-AIDS)", code: "AI303", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-AIDS"], teachers: ["Dr. C. S. Khandelwal"] },
-    { name: "DBMS Lab (TY-AIDS)", code: "AI303L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-AIDS"], teachers: ["Dr. C. S. Khandelwal"] },
+    { name: "DBMS Lab (TY-AIDS)", code: "AI303L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-AIDS"], teachers: ["Dr. C. S. Khandelwal"] },
     { name: "Data Science (TY-AIDS)", code: "AI304", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-AIDS"], teachers: ["Prof. M. K. Pawar"] },
-    { name: "DS Lab (TY-AIDS)", code: "AI304L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["TY-AIDS"], teachers: ["Prof. M. K. Pawar"] },
+    { name: "DS Lab (TY-AIDS)", code: "AI304L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["TY-AIDS"], teachers: ["Prof. M. K. Pawar"] },
     { name: "PE-I (TY-AIDS)", code: "AI305", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["TY-AIDS"], teachers: ["Prof. V. A. Kulkarni"] },
     { name: "MDM (TY-AIDS)", code: "AI306", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["TY-AIDS"], teachers: ["Dr. S. D. Gavarskar"] },
 
     // B.Tech-ECCE
     { name: "Digital Signal Processing (DSP)", code: "EC401", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-ECCE"], teachers: ["Prof. F. I. Shaikh"] },
-    { name: "DSP Lab", code: "EC401L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. F. I. Shaikh"] },
+    { name: "DSP Lab", code: "EC401L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. F. I. Shaikh"] },
     { name: "Computer Networks (B.Tech-ECCE)", code: "EC402", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-ECCE"], teachers: ["Dr. S. N. Pawar"] },
-    { name: "CN Lab (B.Tech-ECCE)", code: "EC402L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. S. D. Jadhav"] },
+    { name: "CN Lab (B.Tech-ECCE)", code: "EC402L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. S. D. Jadhav"] },
     { name: "Software Engineering (ECCE)", code: "EC403", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-ECCE"], teachers: ["Prof. S. A. Annadate"] },
-    { name: "Software Engineering Lab (ECCE)", code: "EC403L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. S. A. Annadate"] },
+    { name: "Software Engineering Lab (ECCE)", code: "EC403L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. S. A. Annadate"] },
     { name: "PE-III (DIP)", code: "EC404", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-ECCE"], teachers: ["Prof. F. I. Shaikh"] },
-    { name: "DIP Lab", code: "EC404L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. S. A. Annadate"] },
+    { name: "DIP Lab", code: "EC404L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. S. A. Annadate"] },
     { name: "PE-IV (AI)", code: "EC405", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-ECCE"], teachers: ["Prof. V. J. Lipne"] },
-    { name: "AI Lab (ECCE)", code: "EC405L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. V. J. Lipne"] },
+    { name: "AI Lab (ECCE)", code: "EC405L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-ECCE"], teachers: ["Prof. V. J. Lipne"] },
     { name: "Business Management (ECCE)", code: "EC406", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["B.Tech-ECCE"], teachers: ["Prof. S. D. Jadhav"] },
 
     // B.Tech-AIDS
     { name: "Natural Language Processing (NLP)", code: "AI401", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-AIDS"], teachers: ["Prof. P. P. Patil"] },
-    { name: "NLP Lab", code: "AI401L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. P. P. Patil"] },
+    { name: "NLP Lab", code: "AI401L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. P. P. Patil"] },
     { name: "Computer Networks (B.Tech-AIDS)", code: "AI402", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-AIDS"], teachers: ["Dr. S. N. Pawar"] },
-    { name: "CN Lab (B.Tech-AIDS)", code: "AI402L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. A. R. Salunke"] },
+    { name: "CN Lab (B.Tech-AIDS)", code: "AI402L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. A. R. Salunke"] },
     { name: "Software Engineering (AIDS)", code: "AI403", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-AIDS"], teachers: ["Prof. S. A. Annadate"] },
-    { name: "Software Engineering Lab (AIDS)", code: "AI403L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. S. A. Annadate"] },
+    { name: "Software Engineering Lab (AIDS)", code: "AI403L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. S. A. Annadate"] },
     { name: "Web Development (AIDS)", code: "AI404", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-AIDS"], teachers: ["Prof. M. K. Pawar"] },
-    { name: "Web Development Lab (AIDS)", code: "AI404L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. M. K. Pawar"] },
+    { name: "Web Development Lab (AIDS)", code: "AI404L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. M. K. Pawar"] },
     { name: "PE-III (AIDS)", code: "AI405", credits: 3, periods: 3, is_lab: 0, lab_dur: 1, classes: ["B.Tech-AIDS"], teachers: ["Prof. V. J. Lipne"] },
-    { name: "PE-III Lab (AIDS)", code: "AI405L", credits: 1, periods: 2, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. V. J. Lipne"] },
+    { name: "PE-III Lab (AIDS)", code: "AI405L", credits: 1, periods: 1, is_lab: 1, lab_dur: 2, classes: ["B.Tech-AIDS"], teachers: ["Prof. V. J. Lipne"] },
     { name: "Business Management (AIDS)", code: "AI406", credits: 2, periods: 2, is_lab: 0, lab_dur: 1, classes: ["B.Tech-AIDS"], teachers: ["Prof. S. D. Jadhav"] },
   ];
 
+  const LAB_ROOM_MAP = {
+    EC201L: ["DMP Lab (FF-38)"],
+    EC202L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+    EC203L: ["Analog Circuit Lab (FF-33)"],
+    EC205L: ["Electronic Workshop Lab (FF-30)"],
+    AI201L: ["DMP Lab (FF-38)"],
+    AI202L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+    AI204L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+    AI206L: ["Electronic Workshop Lab (FF-30)"],
+    EC301L: ["Communication Lab (FF-36)"],
+    EC302L: ["System Software Lab (FF-21)"],
+    EC303L: ["Data Science Lab-II (FF-40)"],
+    EC304L: ["Analog Circuit Lab (FF-33)"],
+    EC305L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+    AI301L: ["Communication Lab (FF-36)"],
+    AI302L: ["System Software Lab (FF-21)"],
+    AI303L: ["Data Science Lab-II (FF-40)"],
+    AI304L: ["Data Science Lab-II (FF-40)"],
+    EC401L: ["EDC Lab (FF-34)"],
+    EC402L: ["Communication Lab (FF-36)"],
+    EC403L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+    EC404L: ["EDC Lab (FF-34)"],
+    EC405L: ["Data Science Lab-II (FF-40)"],
+    AI401L: ["Data Science Lab-II (FF-40)"],
+    AI402L: ["Communication Lab (FF-36)"],
+    AI403L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+    AI404L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+    AI405L: ["Data Science Lab-II (FF-40)"],
+  };
+
   const insertSubject = db.prepare(
-    "INSERT INTO subjects (id, name, code, credits, periods_per_week, is_lab, lab_duration_hours, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO subjects (id, name, code, credits, periods_per_week, is_lab, lab_duration_hours, allowed_rooms, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   );
   const insertSubjClass = db.prepare(
     "INSERT INTO subject_class_assignments (id, subject_id, class_id, created_at) VALUES (?, ?, ?, ?)"
@@ -296,15 +327,31 @@ function seed() {
   const insertTeacherSubject = db.prepare(
     "INSERT INTO teacher_subject_assignments (id, teacher_id, subject_id, class_id, created_at) VALUES (?, ?, ?, ?, ?)"
   );
+  const insertSubjRoom = db.prepare(
+    "INSERT INTO subject_classroom_assignments (id, subject_id, classroom_id, created_at) VALUES (?, ?, ?, ?)"
+  );
 
   let labCount = 0;
   let theoryCount = 0;
 
   subjectList.forEach((s) => {
     const sId = randomUUID();
-    insertSubject.run(sId, s.name, s.code, s.credits, s.periods, s.is_lab, s.lab_dur, now, now);
+    const allowedRooms = LAB_ROOM_MAP[s.code] || [];
+    const allowedRoomsJson = allowedRooms.length > 0 ? JSON.stringify(allowedRooms) : null;
+
+    insertSubject.run(sId, s.name, s.code, s.credits, s.periods, s.is_lab, s.lab_dur, allowedRoomsJson, now, now);
     if (s.is_lab) labCount++;
     else theoryCount++;
+
+    // Assign allowed laboratory rooms
+    if (allowedRooms.length > 0) {
+      allowedRooms.forEach((rName) => {
+        const rId = roomMap.get(rName);
+        if (rId) {
+          insertSubjRoom.run(randomUUID(), sId, rId, now);
+        }
+      });
+    }
 
     // Assign Subject to Classes & Teachers
     s.classes.forEach((cName) => {

@@ -28,13 +28,43 @@ function toCsvRow(arr) {
 
 // Data definitions
 const classes = [
-  { name: "SE-ECCE", year: "Second Year (SE)", capacity: 60, student_count: 58 },
-  { name: "SE-AIDS", year: "Second Year (SE)", capacity: 60, student_count: 55 },
-  { name: "TY-ECCE", year: "Third Year (TY)", capacity: 60, student_count: 56 },
-  { name: "TY-AIDS", year: "Third Year (TY)", capacity: 60, student_count: 54 },
-  { name: "B.Tech-ECCE", year: "Final Year (B.Tech)", capacity: 60, student_count: 57 },
-  { name: "B.Tech-AIDS", year: "Final Year (B.Tech)", capacity: 60, student_count: 56 },
+  { name: "SE-ECCE", year: "Second Year (SE)", capacity: 60, student_count: 58, default_room: "SF-31" },
+  { name: "SE-AIDS", year: "Second Year (SE)", capacity: 60, student_count: 55, default_room: "SF-32" },
+  { name: "TY-ECCE", year: "Third Year (TY)", capacity: 60, student_count: 56, default_room: "SF-33" },
+  { name: "TY-AIDS", year: "Third Year (TY)", capacity: 60, student_count: 54, default_room: "TF-31" },
+  { name: "B.Tech-ECCE", year: "Final Year (B.Tech)", capacity: 60, student_count: 57, default_room: "TF-32" },
+  { name: "B.Tech-AIDS", year: "Final Year (B.Tech)", capacity: 60, student_count: 56, default_room: "FF-22" },
 ];
+
+const LAB_ROOM_MAP = {
+  EC201L: ["DMP Lab (FF-38)"],
+  EC202L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+  EC203L: ["Analog Circuit Lab (FF-33)"],
+  EC205L: ["Electronic Workshop Lab (FF-30)"],
+  AI201L: ["DMP Lab (FF-38)"],
+  AI202L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+  AI204L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+  AI206L: ["Electronic Workshop Lab (FF-30)"],
+  EC301L: ["Communication Lab (FF-36)"],
+  EC302L: ["System Software Lab (FF-21)"],
+  EC303L: ["Data Science Lab-II (FF-40)"],
+  EC304L: ["Analog Circuit Lab (FF-33)"],
+  EC305L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+  AI301L: ["Communication Lab (FF-36)"],
+  AI302L: ["System Software Lab (FF-21)"],
+  AI303L: ["Data Science Lab-II (FF-40)"],
+  AI304L: ["Data Science Lab-II (FF-40)"],
+  EC401L: ["EDC Lab (FF-34)"],
+  EC402L: ["Communication Lab (FF-36)"],
+  EC403L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+  EC404L: ["EDC Lab (FF-34)"],
+  EC405L: ["Data Science Lab-II (FF-40)"],
+  AI401L: ["Data Science Lab-II (FF-40)"],
+  AI402L: ["Communication Lab (FF-36)"],
+  AI403L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+  AI404L: ["Programming Lab-1 (FF-28)", "Programming Lab-2 (FF-28)"],
+  AI405L: ["Data Science Lab-II (FF-40)"],
+};
 
 const classrooms = [
   // Lecture Halls
@@ -83,84 +113,84 @@ const teachers = [
 const subjects = [
   // SE-ECCE
   { name: "Digital System Design (DSD)", code: "EC201", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-ECCE", teachers: "Prof. M. A. Mulay, Prof. V. A. Kulkarni" },
-  { name: "DSD Lab", code: "EC201L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "SE-ECCE", teachers: "Prof. M. A. Mulay" },
+  { name: "DSD Lab", code: "EC201L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "SE-ECCE", teachers: "Prof. M. A. Mulay" },
   { name: "Data Structures (DS)", code: "EC202", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-ECCE", teachers: "Dr. V. B. Malode, Dr. S. D. Gavarskar" },
-  { name: "DS Lab", code: "EC202L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "SE-ECCE", teachers: "Dr. V. B. Malode, Dr. S. D. Gavarskar" },
+  { name: "DS Lab", code: "EC202L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "SE-ECCE", teachers: "Dr. V. B. Malode, Dr. S. D. Gavarskar" },
   { name: "Electronic Circuits & Network Theory (EC&NT)", code: "EC203", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-ECCE", teachers: "Dr. V. B. Malode, Prof. F. I. Shaikh" },
-  { name: "EC&NT Lab", code: "EC203L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "SE-ECCE", teachers: "Prof. F. I. Shaikh" },
+  { name: "EC&NT Lab", code: "EC203L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "SE-ECCE", teachers: "Prof. F. I. Shaikh" },
   { name: "Business Management & Financial Accounting (BMFA)", code: "EC204", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-ECCE", teachers: "Prof. S. D. Jadhav" },
-  { name: "Community Engagement", code: "EC205L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "SE-ECCE", teachers: "Prof. G. R. Basole" },
+  { name: "Community Engagement", code: "EC205L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "SE-ECCE", teachers: "Prof. G. R. Basole" },
   { name: "Multidisciplinary Minor (MDM)", code: "EC206", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-ECCE", teachers: "Dr. S. D. Gavarskar" },
   { name: "Constitution of India", code: "EC207", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-ECCE", teachers: "Prof. G. R. Basole" },
 
   // SE-AIDS
   { name: "Digital Systems & Microprocessors (DS&MP)", code: "AI201", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-AIDS", teachers: "Prof. V. A. Kulkarni" },
-  { name: "DS&MP Lab", code: "AI201L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "SE-AIDS", teachers: "Prof. V. A. Kulkarni" },
+  { name: "DS&MP Lab", code: "AI201L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "SE-AIDS", teachers: "Prof. V. A. Kulkarni" },
   { name: "Data Structures (AIDS)", code: "AI202", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-AIDS", teachers: "Dr. S. D. Gavarskar, Dr. V. B. Malode" },
-  { name: "DS Lab (AIDS)", code: "AI202L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "SE-AIDS", teachers: "Dr. S. D. Gavarskar, Dr. V. B. Malode" },
+  { name: "DS Lab (AIDS)", code: "AI202L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "SE-AIDS", teachers: "Dr. S. D. Gavarskar, Dr. V. B. Malode" },
   { name: "Probability & Random Processes (PB&RP)", code: "AI203", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-AIDS", teachers: "Prof. S. D. Jadhav" },
-  { name: "Web Development Lab (SE)", code: "AI204L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "SE-AIDS", teachers: "Prof. M. K. Pawar" },
+  { name: "Web Development Lab (SE)", code: "AI204L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "SE-AIDS", teachers: "Prof. M. K. Pawar" },
   { name: "BM&FA (AIDS)", code: "AI205", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-AIDS", teachers: "Prof. S. D. Jadhav" },
-  { name: "Community Engagement (AIDS)", code: "AI206L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "SE-AIDS", teachers: "Prof. G. R. Basole" },
+  { name: "Community Engagement (AIDS)", code: "AI206L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "SE-AIDS", teachers: "Prof. G. R. Basole" },
   { name: "MDM (AIDS)", code: "AI207", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-AIDS", teachers: "Dr. C. S. Khandelwal" },
   { name: "Constitution of India (AIDS)", code: "AI208", periods: 2, is_lab: "No", lab_dur: 1, classes: "SE-AIDS", teachers: "Prof. G. R. Basole" },
 
   // TY-ECCE
   { name: "Computer Networks (ECCE)", code: "EC301", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-ECCE", teachers: "Prof. A. R. Salunke, Dr. S. N. Pawar" },
-  { name: "CN Lab (ECCE)", code: "EC301L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Prof. A. R. Salunke" },
+  { name: "CN Lab (ECCE)", code: "EC301L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Prof. A. R. Salunke" },
   { name: "Operating Systems (ECCE)", code: "EC302", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-ECCE", teachers: "Prof. A. P. Phatale" },
-  { name: "OS Lab (ECCE)", code: "EC302L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Prof. A. P. Phatale" },
+  { name: "OS Lab (ECCE)", code: "EC302L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Prof. A. P. Phatale" },
   { name: "Database Management Systems (ECCE)", code: "EC303", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-ECCE", teachers: "Dr. C. S. Khandelwal, Prof. A. P. Phatale" },
-  { name: "DBMS Lab (ECCE)", code: "EC303L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Dr. C. S. Khandelwal" },
+  { name: "DBMS Lab (ECCE)", code: "EC303L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Dr. C. S. Khandelwal" },
   { name: "Analog Communication (AC)", code: "EC304", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-ECCE", teachers: "Prof. M. A. Mulay, Dr. V. A. More" },
-  { name: "AC Lab", code: "EC304L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Prof. M. A. Mulay" },
+  { name: "AC Lab", code: "EC304L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Prof. M. A. Mulay" },
   { name: "PE-I (IoT)", code: "EC305", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-ECCE", teachers: "Prof. F. I. Shaikh, Prof. P. B. Murmude" },
-  { name: "IoT Lab", code: "EC305L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Prof. P. B. Murmude" },
+  { name: "IoT Lab", code: "EC305L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-ECCE", teachers: "Prof. P. B. Murmude" },
   { name: "MDM (TY-ECCE)", code: "EC306", periods: 2, is_lab: "No", lab_dur: 1, classes: "TY-ECCE", teachers: "Prof. P. B. Murmude" },
 
   // TY-AIDS
   { name: "Computer Networks (TY-AIDS)", code: "AI301", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-AIDS", teachers: "Prof. A. R. Salunke, Dr. S. N. Pawar" },
-  { name: "CN Lab (TY-AIDS)", code: "AI301L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-AIDS", teachers: "Prof. A. R. Salunke" },
+  { name: "CN Lab (TY-AIDS)", code: "AI301L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-AIDS", teachers: "Prof. A. R. Salunke" },
   { name: "Operating Systems (TY-AIDS)", code: "AI302", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-AIDS", teachers: "Prof. A. P. Phatale" },
-  { name: "OS Lab (TY-AIDS)", code: "AI302L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-AIDS", teachers: "Prof. A. P. Phatale" },
+  { name: "OS Lab (TY-AIDS)", code: "AI302L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-AIDS", teachers: "Prof. A. P. Phatale" },
   { name: "DBMS (TY-AIDS)", code: "AI303", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-AIDS", teachers: "Dr. C. S. Khandelwal" },
-  { name: "DBMS Lab (TY-AIDS)", code: "AI303L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-AIDS", teachers: "Dr. C. S. Khandelwal" },
+  { name: "DBMS Lab (TY-AIDS)", code: "AI303L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-AIDS", teachers: "Dr. C. S. Khandelwal" },
   { name: "Data Science (TY-AIDS)", code: "AI304", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-AIDS", teachers: "Prof. M. K. Pawar" },
-  { name: "DS Lab (TY-AIDS)", code: "AI304L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "TY-AIDS", teachers: "Prof. M. K. Pawar" },
+  { name: "DS Lab (TY-AIDS)", code: "AI304L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "TY-AIDS", teachers: "Prof. M. K. Pawar" },
   { name: "PE-I (TY-AIDS)", code: "AI305", periods: 3, is_lab: "No", lab_dur: 1, classes: "TY-AIDS", teachers: "Prof. V. A. Kulkarni" },
   { name: "MDM (TY-AIDS)", code: "AI306", periods: 2, is_lab: "No", lab_dur: 1, classes: "TY-AIDS", teachers: "Dr. S. D. Gavarskar" },
 
   // B.Tech-ECCE
   { name: "Digital Signal Processing (DSP)", code: "EC401", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-ECCE", teachers: "Prof. F. I. Shaikh, Prof. M. A. Mulay" },
-  { name: "DSP Lab", code: "EC401L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. F. I. Shaikh" },
+  { name: "DSP Lab", code: "EC401L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. F. I. Shaikh" },
   { name: "Computer Networks (B.Tech-ECCE)", code: "EC402", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-ECCE", teachers: "Dr. S. N. Pawar, Prof. S. D. Jadhav" },
-  { name: "CN Lab (B.Tech-ECCE)", code: "EC402L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. S. D. Jadhav" },
+  { name: "CN Lab (B.Tech-ECCE)", code: "EC402L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. S. D. Jadhav" },
   { name: "Software Engineering (ECCE)", code: "EC403", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-ECCE", teachers: "Prof. S. A. Annadate" },
-  { name: "Software Engineering Lab (ECCE)", code: "EC403L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. S. A. Annadate" },
+  { name: "Software Engineering Lab (ECCE)", code: "EC403L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. S. A. Annadate" },
   { name: "PE-III (DIP)", code: "EC404", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-ECCE", teachers: "Prof. F. I. Shaikh, Prof. S. A. Annadate" },
-  { name: "DIP Lab", code: "EC404L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. S. A. Annadate" },
+  { name: "DIP Lab", code: "EC404L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. S. A. Annadate" },
   { name: "PE-IV (AI)", code: "EC405", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-ECCE", teachers: "Prof. V. J. Lipne" },
-  { name: "AI Lab (ECCE)", code: "EC405L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. V. J. Lipne" },
+  { name: "AI Lab (ECCE)", code: "EC405L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-ECCE", teachers: "Prof. V. J. Lipne" },
   { name: "Business Management (ECCE)", code: "EC406", periods: 2, is_lab: "No", lab_dur: 1, classes: "B.Tech-ECCE", teachers: "Prof. S. D. Jadhav" },
 
   // B.Tech-AIDS
   { name: "Natural Language Processing (NLP)", code: "AI401", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-AIDS", teachers: "Prof. P. P. Patil" },
-  { name: "NLP Lab", code: "AI401L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. P. P. Patil" },
+  { name: "NLP Lab", code: "AI401L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. P. P. Patil" },
   { name: "Computer Networks (B.Tech-AIDS)", code: "AI402", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-AIDS", teachers: "Dr. S. N. Pawar, Prof. A. R. Salunke" },
-  { name: "CN Lab (B.Tech-AIDS)", code: "AI402L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. A. R. Salunke" },
+  { name: "CN Lab (B.Tech-AIDS)", code: "AI402L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. A. R. Salunke" },
   { name: "Software Engineering (AIDS)", code: "AI403", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-AIDS", teachers: "Prof. S. A. Annadate" },
-  { name: "Software Engineering Lab (AIDS)", code: "AI403L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. S. A. Annadate" },
+  { name: "Software Engineering Lab (AIDS)", code: "AI403L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. S. A. Annadate" },
   { name: "Web Development (AIDS)", code: "AI404", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-AIDS", teachers: "Prof. M. K. Pawar, Prof. P. B. Murmude" },
-  { name: "Web Development Lab (AIDS)", code: "AI404L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. M. K. Pawar" },
+  { name: "Web Development Lab (AIDS)", code: "AI404L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. M. K. Pawar" },
   { name: "PE-III (AIDS)", code: "AI405", periods: 3, is_lab: "No", lab_dur: 1, classes: "B.Tech-AIDS", teachers: "Prof. V. J. Lipne, Prof. P. P. Patil" },
-  { name: "PE-III Lab (AIDS)", code: "AI405L", periods: 2, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. V. J. Lipne" },
+  { name: "PE-III Lab (AIDS)", code: "AI405L", periods: 1, is_lab: "Yes", lab_dur: 2, classes: "B.Tech-AIDS", teachers: "Prof. V. J. Lipne" },
   { name: "Business Management (AIDS)", code: "AI406", periods: 2, is_lab: "No", lab_dur: 1, classes: "B.Tech-AIDS", teachers: "Prof. S. D. Jadhav" },
 ];
 
 // 1. Generate 1_classes.csv
 const classesRows = [
-  toCsvRow(["Class Name", "Year", "Student Count"]),
-  ...classes.map(c => toCsvRow([c.name, c.year, c.student_count]))
+  toCsvRow(["Class Name", "Year", "Student Count", "Default Room"]),
+  ...classes.map(c => toCsvRow([c.name, c.year, c.student_count, c.default_room]))
 ];
 fs.writeFileSync(path.join(outDir, "1_classes.csv"), classesRows.join("\n"), "utf8");
 console.log("✓ Created 1_classes.csv");
@@ -175,16 +205,23 @@ console.log("✓ Created 2_classrooms_and_labs.csv");
 
 // 3. Generate 3_teachers.csv
 const teacherRows = [
-  toCsvRow(["Teacher Name", "Email", "Specialization", "Phone"]),
-  ...teachers.map(t => toCsvRow([t.name, t.email, t.specialization, t.phone]))
+  toCsvRow(["Teacher Name", "Email", "Specialization", "Phone", "Max Daily Periods"]),
+  ...teachers.map(t => toCsvRow([t.name, t.email, t.specialization, t.phone, 5]))
 ];
 fs.writeFileSync(path.join(outDir, "3_teachers.csv"), teacherRows.join("\n"), "utf8");
 console.log("✓ Created 3_teachers.csv");
 
 // 4. Generate 4_subjects_and_labs.csv
 const subjectRows = [
-  toCsvRow(["Subject Name", "Subject Code", "Periods per Week", "Is Lab", "Lab Duration Hours", "Classes", "Teachers"]),
-  ...subjects.map(s => toCsvRow([s.name, s.code, s.periods, s.is_lab, s.lab_dur, s.classes, s.teachers]))
+  toCsvRow(["Subject Name", "Subject Code", "Credits", "Periods per Week", "Is Lab", "Lab Duration Hours", "Classes", "Teachers", "Allowed Rooms"]),
+  ...subjects.map(s => {
+    const isLab = s.is_lab === "Yes";
+    const credits = isLab ? 1 : s.periods;
+    const periods = isLab ? 1 : s.periods;
+    const labDur = isLab ? 2 : 1;
+    const allowedRooms = LAB_ROOM_MAP[s.code] ? LAB_ROOM_MAP[s.code].join(", ") : "";
+    return toCsvRow([s.name, s.code, credits, periods, s.is_lab, labDur, s.classes, s.teachers, allowedRooms]);
+  })
 ];
 fs.writeFileSync(path.join(outDir, "4_subjects_and_labs.csv"), subjectRows.join("\n"), "utf8");
 console.log("✓ Created 4_subjects_and_labs.csv");
@@ -202,23 +239,33 @@ const masterHeader = [
   "Lab_Duration_Hours",
   "Email",
   "Specialization",
+  "Max_Daily_Periods",
   "Location",
   "Equipment",
   "Classes",
   "Teachers",
-  "Batches"
+  "Batches",
+  "Default_Room",
+  "Allowed_Rooms"
 ];
 
 const masterRows = [
   toCsvRow(masterHeader),
-  // Classes (with Batches)
-  ...classes.map(c => toCsvRow(["CLASS", c.name, "", c.year, c.capacity, "", "", "No", "1", "", "", "", "", "", "", "Batch A: 20, Batch B: 20, Batch C: 19"])),
+  // Classes (with Batches & Default Room)
+  ...classes.map(c => toCsvRow(["CLASS", c.name, "", c.year, c.capacity, "", "", "No", "1", "", "", "", "", "", "", "", "Batch A: 20, Batch B: 20, Batch C: 19", c.default_room, ""])),
   // Classrooms
-  ...classrooms.map(r => toCsvRow(["CLASSROOM", r.name, "", "", r.capacity, "", "", r.is_lab, "", "", "", r.location, r.equipment, "", "", ""])),
+  ...classrooms.map(r => toCsvRow(["CLASSROOM", r.name, "", "", r.capacity, "", "", r.is_lab, "", "", "", "", r.location, r.equipment, "", "", "", "", ""])),
   // Teachers
-  ...teachers.map(t => toCsvRow(["TEACHER", t.name, "", "", "", "", "", "No", "", t.email, t.specialization, "", "", "", "", ""])),
-  // Subjects (with Credits & Periods)
-  ...subjects.map(s => toCsvRow(["SUBJECT", s.name, s.code, "", "", s.periods, s.periods, s.is_lab, s.lab_dur, "", "", "", "", s.classes, s.teachers, ""])),
+  ...teachers.map(t => toCsvRow(["TEACHER", t.name, "", "", "", "", "", "No", "", t.email, t.specialization, 5, "", "", "", "", "", "", ""])),
+  // Subjects (with Credits & Periods: Labs strictly 1 credit and 1 period/week per batch, with Allowed Rooms)
+  ...subjects.map(s => {
+    const isLab = s.is_lab === "Yes";
+    const credits = isLab ? 1 : s.periods;
+    const periods = isLab ? 1 : s.periods;
+    const labDur = isLab ? 2 : 1;
+    const allowedRooms = LAB_ROOM_MAP[s.code] ? LAB_ROOM_MAP[s.code].join(", ") : "";
+    return toCsvRow(["SUBJECT", s.name, s.code, "", "", credits, periods, s.is_lab, labDur, "", "", "", "", "", s.classes, s.teachers, "", "", allowedRooms]);
+  }),
 ];
 
 const csvContent = masterRows.join("\n");

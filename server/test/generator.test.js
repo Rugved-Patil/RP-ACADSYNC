@@ -166,6 +166,22 @@ describe("Genetic Algorithm Timetable Generator Tests", () => {
       }
     }
 
+    // 8. Strict Allowed Rooms Constraint Check
+    for (const l of lessons) {
+      if (l.classroom_id) {
+        const allowedAssignments = db
+          .prepare("SELECT classroom_id FROM subject_classroom_assignments WHERE subject_id = ?")
+          .all(l.subject_id);
+        if (allowedAssignments.length > 0) {
+          const allowedSet = new Set(allowedAssignments.map((a) => a.classroom_id));
+          assert.ok(
+            allowedSet.has(l.classroom_id),
+            `Lesson for subject ${l.subject_id} was assigned room ${l.classroom_id}, but allowed rooms are [${Array.from(allowedSet).join(", ")}]`
+          );
+        }
+      }
+    }
+
     // Cleanup test timetable
     db.prepare("DELETE FROM timetables WHERE id = ?").run(result.id);
   });

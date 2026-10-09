@@ -110,6 +110,7 @@ const Transform = {
           capacity: parseInt(r["Capacity"]) || 60,
           student_count: parseInt(r["Student Count"] || r["Capacity"]) || 60,
           batches: batches,
+          default_room: r["Default_Room"] || r["Default Room"] || r["Classroom"] || r["Room"] || "",
         };
       })
       .filter((r) => r.name),
@@ -121,6 +122,7 @@ const Transform = {
         email: r["Email"] || r["email"] || "",
         phone: r["Phone"] || r["phone"] || "",
         specialization: r["Specialization"] || r["Subject"] || r["specialization"] || "",
+        max_daily_periods: parseInt(r["Max_Daily_Periods"] || r["Max Daily Periods"] || r["Max Periods"] || 5) || 5,
         subjects: r["Subjects"] ? String(r["Subjects"]).split(",").map((s) => s.trim()) : [],
       }))
       .filter((r) => r.name && r.email),
@@ -131,10 +133,27 @@ const Transform = {
         const isLab = ["true", "1", "yes", "lab"].some((v) =>
           String(r["Is_Lab"] || r["Is Lab"] || r["Type"] || "").toLowerCase().includes(v)
         );
-        const labDur = parseInt(r["Lab_Duration_Hours"] || r["Lab Duration Hours"] || r["Lab Duration"] || r["Duration"]) || (isLab ? 2 : 1);
-        const credits = parseInt(r["Credits"] || r["Credit"] || r["credits"] || r["Periods_Per_Week"] || r["Periods per Week"] || (isLab ? 1 : 3)) || (isLab ? 1 : 3);
-        const periodsPerWeek = isLab ? credits : (parseInt(r["Periods_Per_Week"] || r["Periods per Week"] || r["Periods"]) || credits);
-        
+        const labDur = isLab ? 2 : 1;
+        // If credits is given, respect it. If not given, default to 1 for labs, 3 for theory.
+        const rawCredits = r["Credits"] || r["Credit"] || r["credits"];
+        const parsedCredits = parseInt(rawCredits);
+        const credits = !isNaN(parsedCredits) && parsedCredits > 0
+          ? parsedCredits
+          : (isLab ? 1 : 3);
+
+        const rawPeriods = r["Periods_Per_Week"] || r["Periods per Week"] || r["Periods"];
+        const parsedPeriods = parseInt(rawPeriods);
+        // For labs, periods_per_week represents weekly sessions per batch (equal to credits).
+        // If a CSV gives periods as 2 for a 1-credit lab (legacy/duration artifact), normalize it to credits.
+        const periodsPerWeek = isLab
+          ? credits
+          : (!isNaN(parsedPeriods) && parsedPeriods > 0 ? parsedPeriods : credits);
+
+        const rawAllowed = r["Allowed_Rooms"] || r["Allowed Rooms"] || r["Rooms"] || r["Classrooms"] || "";
+        const allowedRooms = rawAllowed
+          ? String(rawAllowed).split(/[,;]/).map((s) => s.trim()).filter(Boolean)
+          : [];
+
         return {
           name: r["Subject Name"] || r["Name"] || r["name"] || "",
           code: r["Subject Code"] || r["Code"] || r["code"] || "",
@@ -142,6 +161,7 @@ const Transform = {
           periods_per_week: periodsPerWeek,
           is_lab: isLab,
           lab_duration_hours: labDur,
+          allowed_rooms: allowedRooms,
           classes: r["Classes"] ? String(r["Classes"]).split(",").map((c) => c.trim()).filter(Boolean) : [],
           teachers: r["Teachers"] ? String(r["Teachers"]).trim() : "",
         };
@@ -259,13 +279,34 @@ const Insert = {
     }
     let count = 0;
     for (const r of rows) {
-      upsertReturning("classes", ["name", "year_id", "student_count", "capacity", "batches"], "name", {
+      const classId = upsertReturning("classes", ["name", "year_id", "student_count", "capacity", "batches"], "name", {
         name: r.name,
         year_id: r.year_name ? yearIds[r.year_name] : null,
         student_count: r.student_count,
         capacity: r.capacity || 60,
         batches: JSON.stringify(r.batches || ["Batch A", "Batch B", "Batch C"]),
       });
+
+      // Link default classroom if provided
+      if (r.default_room) {
+        const room = db.prepare("SELECT id FROM classrooms WHERE name = ?").get(r.default_room);
+        if (room) {
+          const now = new Date().toISOString();
+          const existing = db.prepare("SELECT id FROM class_classroom_assignments WHERE class_id = ?").get(classId);
+          if (existing) {
+            db.prepare("UPDATE class_classroom_assignments SET classroom_id = ?, updated_at = ? WHERE id = ?").run(
+              room.id,
+              now,
+              existing.id
+            );
+          } else {
+            db.prepare(
+              "INSERT INTO class_classroom_assignments (id, class_id, classroom_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
+            ).run(randomUUID(), classId, room.id, now, now);
+          }
+        }
+      }
+
       count++;
     }
     return `Inserted/updated ${count} classes`;
@@ -274,10 +315,11 @@ const Insert = {
   teachers(rows) {
     let count = 0;
     for (const r of rows) {
-      const id = upsertReturning("teachers", ["name", "email", "specialization"], "email", {
+      const id = upsertReturning("teachers", ["name", "email", "specialization", "max_periods_per_day"], "email", {
         name: r.name,
         email: r.email,
         specialization: r.specialization,
+        max_periods_per_day: r.max_daily_periods || 5,
       });
       if (r.subjects && r.subjects.length > 0) {
         const placeholders = r.subjects.map(() => "?").join(",");
@@ -303,19 +345,36 @@ const Insert = {
   subjects(rows) {
     let count = 0;
     for (const r of rows) {
+      const allowedRoomsJson = r.allowed_rooms && r.allowed_rooms.length > 0 ? JSON.stringify(r.allowed_rooms) : null;
       const id = upsertReturning(
         "subjects",
-        ["name", "code", "credits", "periods_per_week", "is_lab", "lab_duration_hours"],
+        ["name", "code", "credits", "periods_per_week", "is_lab", "lab_duration_hours", "allowed_rooms"],
         "code",
         {
           name: r.name,
           code: r.code,
-          credits: r.credits || (r.is_lab ? 1 : 3),
-          periods_per_week: r.periods_per_week || (r.is_lab ? 1 : 3),
+          credits: r.credits !== undefined && r.credits !== null && r.credits > 0 ? r.credits : (r.is_lab ? 1 : 3),
+          periods_per_week: r.is_lab ? (r.credits || 1) : (r.periods_per_week || r.credits || 3),
           is_lab: r.is_lab ? 1 : 0,
           lab_duration_hours: r.lab_duration_hours || (r.is_lab ? 2 : 1),
+          allowed_rooms: allowedRoomsJson,
         }
       );
+
+      // Idempotently link allowed classrooms
+      db.prepare("DELETE FROM subject_classroom_assignments WHERE subject_id = ?").run(id);
+      if (r.allowed_rooms && r.allowed_rooms.length > 0) {
+        const placeholders = r.allowed_rooms.map(() => "?").join(",");
+        const matchedRooms = db
+          .prepare(`SELECT id FROM classrooms WHERE name IN (${placeholders})`)
+          .all(...r.allowed_rooms);
+        const now = new Date().toISOString();
+        for (const rm of matchedRooms) {
+          db.prepare(
+            "INSERT INTO subject_classroom_assignments (id, subject_id, classroom_id, created_at) VALUES (?, ?, ?, ?)"
+          ).run(randomUUID(), id, rm.id, now);
+        }
+      }
 
       const assignedClassIds = [];
       if (r.classes && r.classes.length > 0) {
@@ -470,8 +529,8 @@ const Insert = {
       });
     }
 
-    Insert.classes(data.classes);
     Insert.classrooms(data.classrooms);
+    Insert.classes(data.classes);
     Insert.teachers(data.teachers);
     Insert.subjects(data.subjects);
 

@@ -79,6 +79,10 @@ function generateTimetable({
   const assignments = db.prepare("SELECT * FROM subject_class_assignments").all();
   const teacherSubjects = db.prepare("SELECT * FROM teacher_subject_assignments").all();
   const classroomAssignments = db.prepare("SELECT * FROM class_classroom_assignments").all();
+  let subjectClassroomAssignments = [];
+  try {
+    subjectClassroomAssignments = db.prepare("SELECT * FROM subject_classroom_assignments").all();
+  } catch {}
 
   // If no timingId provided, pick the first timing configuration
   let timing;
@@ -128,6 +132,59 @@ function generateTimetable({
   const teacherMap = new Map(teachers.map((t) => [t.id, t]));
   const classroomMap = new Map(classrooms.map((c) => [c.id, c]));
 
+  // Allowed rooms per subject (hard constraint: if specified, subject/lab can ONLY be held in these rooms)
+  const subjectAllowedRoomIds = new Map();
+  for (const s of subjects) {
+    const allowedSet = new Set();
+    subjectClassroomAssignments
+      .filter((sca) => sca.subject_id === s.id)
+      .forEach((sca) => allowedSet.add(sca.classroom_id));
+
+    if (s.allowed_rooms) {
+      let roomsList = [];
+      if (Array.isArray(s.allowed_rooms)) {
+        roomsList = s.allowed_rooms;
+      } else if (typeof s.allowed_rooms === "string") {
+        try {
+          const parsed = JSON.parse(s.allowed_rooms);
+          if (Array.isArray(parsed)) roomsList = parsed;
+          else roomsList = s.allowed_rooms.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+        } catch {
+          roomsList = s.allowed_rooms.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+        }
+      }
+      for (const item of roomsList) {
+        const found = classrooms.find((c) => c.name === item || c.id === item);
+        if (found) allowedSet.add(found.id);
+      }
+    }
+
+    if (allowedSet.size > 0) {
+      subjectAllowedRoomIds.set(s.id, allowedSet);
+    }
+  }
+
+  const labRooms = classrooms.filter((r) => !!r.is_lab);
+  const theoryRooms = classrooms.filter((r) => !r.is_lab);
+  const fallbackRooms = classrooms.length > 0 ? classrooms : [{ id: null, name: "TBA", is_lab: 0 }];
+
+  function getCandidateRooms(unit) {
+    if (unit && unit.subject_id && subjectAllowedRoomIds.has(unit.subject_id)) {
+      const allowedSet = subjectAllowedRoomIds.get(unit.subject_id);
+      const matched = classrooms.filter((r) => allowedSet.has(r.id));
+      if (matched.length > 0) return matched;
+    }
+    if (unit && unit.is_lab) {
+      return labRooms.length > 0 ? labRooms : fallbackRooms;
+    }
+    const defRoomId = unit ? classDefaultRoom.get(unit.class_id) : null;
+    const defRoom = classrooms.find((r) => r.id === defRoomId);
+    if (defRoom) {
+      return [defRoom, ...theoryRooms.filter((r) => r.id !== defRoomId)];
+    }
+    return theoryRooms.length > 0 ? theoryRooms : fallbackRooms;
+  }
+
   // Teacher eligibility per class and subject
   const teachersBySubjectAndClass = new Map();
   for (const cls of classes) {
@@ -144,10 +201,6 @@ function generateTimetable({
       teachersBySubjectAndClass.set(key, qualified.length > 0 ? qualified : teachers);
     }
   }
-
-  const labRooms = classrooms.filter((r) => !!r.is_lab);
-  const theoryRooms = classrooms.filter((r) => !r.is_lab);
-  const fallbackRooms = classrooms.length > 0 ? classrooms : [{ id: null, name: "TBA", is_lab: 0 }];
 
   // -------------------------------------------------------------------------
   // Build the list of lesson units (Genes) to schedule
@@ -240,16 +293,17 @@ function generateTimetable({
       slots = [randomChoice(timeSlots).id];
     }
 
+    const candidateRooms = getCandidateRooms(unit);
     let room;
-    if (unit.is_lab) {
-      room = labRooms.length > 0 ? randomChoice(labRooms) : randomChoice(fallbackRooms);
-    } else {
+    if (!unit.is_lab && !subjectAllowedRoomIds.has(unit.subject_id)) {
       const defRoomId = classDefaultRoom.get(unit.class_id);
       if (defRoomId && Math.random() < 0.75) {
-        room = classrooms.find((r) => r.id === defRoomId) || randomChoice(fallbackRooms);
+        room = classrooms.find((r) => r.id === defRoomId) || randomChoice(candidateRooms);
       } else {
-        room = theoryRooms.length > 0 ? randomChoice(theoryRooms) : randomChoice(fallbackRooms);
+        room = randomChoice(candidateRooms);
       }
+    } else {
+      room = randomChoice(candidateRooms);
     }
 
     return {
@@ -389,7 +443,8 @@ function generateTimetable({
             }
           }
 
-          const shuffledLabs = shuffle(labRooms.length > 0 ? labRooms : fallbackRooms);
+          const candidateLabs = getCandidateRooms(unit);
+          const shuffledLabs = shuffle(candidateLabs);
           let assignedRoom = shuffledLabs[0] || fallbackRooms[0];
           for (const r of shuffledLabs) {
             const isFree = slotIds.every((sid) => !bookedRooms.has(`${chosenDay}:${sid}:${r.id}`));
@@ -424,9 +479,7 @@ function generateTimetable({
       const eligibleTeachers = shuffle(
         teachersBySubjectAndClass.get(`${unit.class_id}_${unit.subject_id}`) || teachers
       );
-      const defRoomId = classDefaultRoom.get(unit.class_id);
-      const defRoom = classrooms.find((r) => r.id === defRoomId);
-      const candidateRooms = defRoom ? [defRoom, ...theoryRooms] : (theoryRooms.length > 0 ? theoryRooms : fallbackRooms);
+      const candidateRooms = getCandidateRooms(unit);
 
       let bestSlot = null;
       let bestDay = null;
@@ -541,6 +594,14 @@ function generateTimetable({
       if (unit.is_lab && roomId) {
         const roomObj = classroomMap.get(roomId);
         if (roomObj && !roomObj.is_lab) {
+          hardViolations += 2;
+        }
+      }
+
+      // Hard Constraint: Subject/Lab placed only in allowed rooms if specified
+      if (roomId && subjectAllowedRoomIds.has(subjectId)) {
+        const allowedSet = subjectAllowedRoomIds.get(subjectId);
+        if (!allowedSet.has(roomId)) {
           hardViolations += 2;
         }
       }
@@ -733,6 +794,18 @@ function generateTimetable({
           } else {
             roomSlots.set(rKey, i);
           }
+
+          if (unit.is_lab) {
+            const rmObj = classroomMap.get(roomId);
+            if (rmObj && !rmObj.is_lab) conflicted.add(i);
+          }
+
+          if (subjectAllowedRoomIds.has(unit.subject_id)) {
+            const allowedSet = subjectAllowedRoomIds.get(unit.subject_id);
+            if (!allowedSet.has(roomId)) {
+              conflicted.add(i);
+            }
+          }
         }
 
         if (!batch) {
@@ -803,12 +876,9 @@ function generateTimetable({
   }
 
   // Fast helper to find a valid free room for a given day and slotIds
-  function findFreeRoom(day, slotIds, isLab, classId, genes, excludeIndex = -1) {
-    const candidateRooms = isLab
-      ? (labRooms.length > 0 ? labRooms : fallbackRooms)
-      : (classDefaultRoom.get(classId)
-          ? [classrooms.find((r) => r.id === classDefaultRoom.get(classId)), ...theoryRooms].filter(Boolean)
-          : (theoryRooms.length > 0 ? theoryRooms : fallbackRooms));
+  function findFreeRoom(day, slotIds, isLab, classId, genes, excludeIndex = -1, subjectId = null) {
+    const unit = { class_id: classId, subject_id: subjectId, is_lab: isLab };
+    const candidateRooms = getCandidateRooms(unit);
 
     const occupied = new Set();
     for (let j = 0; j < genes.length; j++) {
@@ -895,7 +965,7 @@ function generateTimetable({
         } else {
           newSlotIds = [randomChoice(timeSlots).id];
         }
-        const rm = findFreeRoom(newDay, newSlotIds, unit.is_lab, unit.class_id, mutated, i);
+        const rm = findFreeRoom(newDay, newSlotIds, unit.is_lab, unit.class_id, mutated, i, unit.subject_id);
         mutated[i] = {
           day: newDay,
           slotIds: newSlotIds,
@@ -911,7 +981,7 @@ function generateTimetable({
         }
       } else if (mutationType < 0.85) {
         // Operator 3: Room Reallocation Mutation
-        const rm = findFreeRoom(gene.day, gene.slotIds, unit.is_lab, unit.class_id, mutated, i);
+        const rm = findFreeRoom(gene.day, gene.slotIds, unit.is_lab, unit.class_id, mutated, i, unit.subject_id);
         if (rm) {
           mutated[i] = { ...gene, classroom_id: rm.id };
         }
@@ -921,7 +991,7 @@ function generateTimetable({
           const sisterIndices = syncGroups.get(unit.syncGroupId).filter((idx) => idx !== i);
           if (sisterIndices.length > 0) {
             const anchor = mutated[sisterIndices[0]];
-            const rm = findFreeRoom(anchor.day, anchor.slotIds, true, unit.class_id, mutated, i);
+            const rm = findFreeRoom(anchor.day, anchor.slotIds, true, unit.class_id, mutated, i, unit.subject_id);
             mutated[i] = {
               day: anchor.day,
               slotIds: [...anchor.slotIds],
@@ -1032,8 +1102,11 @@ function generateTimetable({
               }
 
               if (conflicts < minConflicts) {
-                const rm = findFreeRoom(d, slotIds, u.is_lab, u.class_id, repaired, i);
+                const rm = findFreeRoom(d, slotIds, u.is_lab, u.class_id, repaired, i, u.subject_id);
                 if (u.is_lab && (!rm || !rm.is_lab)) conflicts += 2;
+                if (rm?.id && subjectAllowedRoomIds.has(u.subject_id)) {
+                  if (!subjectAllowedRoomIds.get(u.subject_id).has(rm.id)) conflicts += 2;
+                }
                 for (const sid of slotIds) {
                   if (rm?.id && roomSlots.has(`${d}:${sid}:${rm.id}`)) conflicts += 2;
                 }

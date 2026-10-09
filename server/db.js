@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS subjects (
   periods_per_week INTEGER DEFAULT 3,
   is_lab INTEGER DEFAULT 0,
   lab_duration_hours INTEGER DEFAULT 1,
+  allowed_rooms TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -174,6 +175,13 @@ CREATE TABLE IF NOT EXISTS class_classroom_assignments (
   classroom_id TEXT REFERENCES classrooms(id) ON DELETE CASCADE,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS subject_classroom_assignments (
+  id TEXT PRIMARY KEY,
+  subject_id TEXT REFERENCES subjects(id) ON DELETE CASCADE,
+  classroom_id TEXT REFERENCES classrooms(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS timetables (
@@ -288,6 +296,10 @@ try {
   db.exec("ALTER TABLE lessons ADD COLUMN batch TEXT;");
 } catch {}
 
+try {
+  db.exec("ALTER TABLE subjects ADD COLUMN allowed_rooms TEXT;");
+} catch {}
+
 // ---------------------------------------------------------------------------
 // Table metadata used by the generic REST layer (routes.js) so it knows how
 // to translate JS values <-> SQLite storage for each table.
@@ -295,7 +307,7 @@ try {
 const TABLES = {
   years: { boolCols: [], jsonCols: [] },
   classes: { boolCols: [], jsonCols: ["batches"] },
-  subjects: { boolCols: ["is_lab"], jsonCols: [] },
+  subjects: { boolCols: ["is_lab"], jsonCols: ["allowed_rooms"] },
   teachers: { boolCols: [], jsonCols: [] },
   classrooms: { boolCols: ["is_lab"], jsonCols: [] },
   timings: { boolCols: [], jsonCols: ["working_days", "periods"] },
@@ -303,6 +315,7 @@ const TABLES = {
   subject_class_assignments: { boolCols: [], jsonCols: [] },
   teacher_subject_assignments: { boolCols: [], jsonCols: [] },
   class_classroom_assignments: { boolCols: [], jsonCols: [] },
+  subject_classroom_assignments: { boolCols: [], jsonCols: [] },
   timetables: { boolCols: ["is_active", "is_locked"], jsonCols: [] },
   lessons: { boolCols: [], jsonCols: [] },
   timetable_drafts: { boolCols: [], jsonCols: ["draft_data"] },

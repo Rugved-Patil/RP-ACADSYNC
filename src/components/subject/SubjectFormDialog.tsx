@@ -27,6 +27,7 @@ export const SubjectFormDialog = ({
     name: "",
     code: "",
     classes: [],
+    credits: 1,
     periodsPerWeek: 1,
     isLab: false,
     lab_duration_hours: 2
@@ -34,12 +35,15 @@ export const SubjectFormDialog = ({
 
   React.useEffect(() => {
     if (open) {
+      const isLab = currentSubject?.isLab || false;
+      const defaultCredits = currentSubject?.credits ?? (isLab ? 1 : (currentSubject?.periodsPerWeek || 3));
       setFormData({
         name: currentSubject?.name || "",
         code: currentSubject?.code || "",
         classes: currentSubject?.classes || [],
-        periodsPerWeek: currentSubject?.periodsPerWeek || 1,
-        isLab: currentSubject?.isLab || false,
+        credits: defaultCredits,
+        periodsPerWeek: currentSubject?.periodsPerWeek || defaultCredits,
+        isLab: isLab,
         lab_duration_hours: currentSubject?.lab_duration_hours || 2
       });
     }
@@ -78,17 +82,34 @@ export const SubjectFormDialog = ({
               placeholder="e.g. CS101"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="periodsPerWeek">Periods Per Week *</Label>
-            <Input
-              id="periodsPerWeek"
-              name="periodsPerWeek"
-              type="number"
-              min="1"
-              value={formData.periodsPerWeek}
-              onChange={(e) => setFormData({ ...formData, periodsPerWeek: parseInt(e.target.value) || 1 })}
-              placeholder="e.g. 5"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="credits">Credits *</Label>
+              <Input
+                id="credits"
+                name="credits"
+                type="number"
+                min="1"
+                value={formData.credits || 1}
+                onChange={(e) => {
+                  const c = parseInt(e.target.value) || 1;
+                  setFormData({ ...formData, credits: c });
+                }}
+                placeholder="1 for Lab, 3 for Theory"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="periodsPerWeek">Periods Per Week *</Label>
+              <Input
+                id="periodsPerWeek"
+                name="periodsPerWeek"
+                type="number"
+                min="1"
+                value={formData.periodsPerWeek}
+                onChange={(e) => setFormData({ ...formData, periodsPerWeek: parseInt(e.target.value) || 1 })}
+                placeholder="e.g. 3"
+              />
+            </div>
           </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
