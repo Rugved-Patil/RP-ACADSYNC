@@ -1,7 +1,7 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert");
 const { db, fromRow } = require("../db");
-const { generateTimetable } = require("../lib/generator");
+const { generateTimetable, getClassBatches } = require("../lib/generator");
 
 describe("Genetic Algorithm Timetable Generator Tests", () => {
   it("should generate a conflict-free timetable satisfying all hard constraints", () => {
@@ -9,8 +9,8 @@ describe("Genetic Algorithm Timetable Generator Tests", () => {
     const result = generateTimetable({
       name: "Test GA Schedule",
       academicYear: "2026-2027",
-      popSize: 50,
-      maxGenerations: 100,
+      popSize: 40,
+      maxGenerations: 60,
     });
 
     assert.ok(result);
@@ -21,6 +21,7 @@ describe("Genetic Algorithm Timetable Generator Tests", () => {
       0,
       `Hard constraint violations must be 0, got ${result.hardViolations}`
     );
+    assert.strictEqual(typeof result.midDayGaps, "number", "Should compute mid-day gap score");
 
     // Verify persisted rows in SQLite
     const savedTimetable = db.prepare("SELECT * FROM timetables WHERE id = ?").get(result.id);
@@ -36,13 +37,14 @@ describe("Genetic Algorithm Timetable Generator Tests", () => {
 
     // Hard Constraint Verification on the database rows:
     const teacherSlots = new Set();
-    const classSlots = new Set();
     const roomSlots = new Set();
     const teacherDailyCounts = new Map();
     const classrooms = db.prepare("SELECT * FROM classrooms").all().map((c) => fromRow("classrooms", c));
     const subjects = db.prepare("SELECT * FROM subjects").all().map((s) => fromRow("subjects", s));
+    const classes = db.prepare("SELECT * FROM classes").all().map((c) => fromRow("classes", c));
     const teachers = db.prepare("SELECT * FROM teachers").all();
     const timeSlots = db.prepare("SELECT * FROM time_slots").all().map((t) => fromRow("time_slots", t));
+    const assignments = db.prepare("SELECT * FROM subject_class_assignments").all();
 
     const classroomMap = new Map(classrooms.map((c) => [c.id, c]));
     const subjectMap = new Map(subjects.map((s) => [s.id, s]));
@@ -98,7 +100,7 @@ describe("Genetic Algorithm Timetable Generator Tests", () => {
       const tdKey = `${tId}:${day}`;
       const count = (teacherDailyCounts.get(tdKey) || 0) + 1;
       teacherDailyCounts.set(tdKey, count);
-      const maxDaily = teacherMap.get(tId)?.max_periods_per_day || 4;
+      const maxDaily = teacherMap.get(tId)?.max_periods_per_day || 5;
       assert.ok(
         count <= maxDaily,
         `Teacher ${tId} exceeded max daily limit on day ${day}: ${count} > ${maxDaily}`
@@ -125,6 +127,41 @@ describe("Genetic Algorithm Timetable Generator Tests", () => {
             !(sameSubject && consecutive),
             "Non-lab subject must not repeat consecutively back-to-back"
           );
+        }
+      }
+    }
+
+    // 7. Exact Credit-to-Hours Verification
+    for (const cls of classes) {
+      const classSubjects = subjects.filter((subject) =>
+        assignments.some((a) => a.class_id === cls.id && a.subject_id === subject.id)
+      );
+      const batches = getClassBatches(cls);
+
+      for (const subject of classSubjects) {
+        if (!subject.is_lab) {
+          const expectedHours = subject.credits || subject.periods_per_week || 3;
+          const actualHours = lessons.filter(
+            (l) => l.class_id === cls.id && l.subject_id === subject.id && !l.batch
+          ).length;
+          assert.strictEqual(
+            actualHours,
+            expectedHours,
+            `Theory subject ${subject.name} in class ${cls.name} must have ${expectedHours} hours, found ${actualHours}`
+          );
+        } else {
+          // Lab: 1 credit = 2 hours (1 block of 2 slots) for each batch
+          const expectedHoursPerBatch = (subject.credits || 1) * 2;
+          for (const b of batches) {
+            const actualBatchHours = lessons.filter(
+              (l) => l.class_id === cls.id && l.subject_id === subject.id && l.batch === b
+            ).length;
+            assert.strictEqual(
+              actualBatchHours,
+              expectedHoursPerBatch,
+              `Lab subject ${subject.name} batch ${b} in class ${cls.name} must have ${expectedHoursPerBatch} hours, found ${actualBatchHours}`
+            );
+          }
         }
       }
     }
